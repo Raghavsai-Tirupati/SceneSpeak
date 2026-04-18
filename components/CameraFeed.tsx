@@ -91,7 +91,7 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
         className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center p-8"
         role="alert"
       >
-        <p className="text-white/50 text-sm text-center leading-relaxed font-[family-name:var(--font-pixel)]">
+        <p className="text-white/50 text-sm text-center leading-relaxed">
           {error}
         </p>
       </div>
@@ -119,13 +119,13 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
         />
       )}
 
-      {/* Subtle edge darkening */}
+      {/* Edge vignette */}
       <div
         className="fixed inset-0 pointer-events-none"
         aria-hidden="true"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 15%, transparent 80%, rgba(0,0,0,0.5) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 18%, transparent 78%, rgba(0,0,0,0.55) 100%)",
         }}
       />
 

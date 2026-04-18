@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Press_Start_2P } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const pixel = Press_Start_2P({
-  weight: "400",
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-pixel",
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${pixel.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} font-[family-name:var(--font-sans)] antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

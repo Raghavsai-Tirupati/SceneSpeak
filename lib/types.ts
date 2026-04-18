@@ -10,3 +10,11 @@ export interface AskRequest {
   transcript: string;
   history: Message[];
 }
+
+export interface SessionEntry {
+  id: number;
+  thumbnail: string;
+  question: string;
+  answer: string;
+  timestamp: number;
+}

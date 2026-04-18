@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraFeed, { CameraFeedHandle } from "@/components/CameraFeed";
 import StatusIndicator from "@/components/StatusIndicator";
-import { AppState, Message } from "@/lib/types";
+import { AppState, Message, SessionEntry } from "@/lib/types";
 
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
@@ -34,21 +34,52 @@ function IntroScreen({
   dismissing: boolean;
 }) {
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let cancelled = false;
+    let repeatTimer: ReturnType<typeof setInterval> | null = null;
+
+    const speak = () => {
+      if (cancelled) return;
+      window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(
         "Welcome to SceneSpeak. Tap anywhere to begin."
       );
-      u.rate = 0.95;
+      u.rate = 1.8;
       window.speechSynthesis.speak(u);
-    }, 600);
-    return () => clearTimeout(timer);
+    };
+
+    const init = () => {
+      if (cancelled) return;
+      if (window.speechSynthesis.getVoices().length > 0) {
+        speak();
+      } else {
+        window.speechSynthesis.addEventListener("voiceschanged", speak, {
+          once: true,
+        });
+      }
+      repeatTimer = setInterval(() => {
+        if (cancelled) return;
+        const u = new SpeechSynthesisUtterance("Tap anywhere to begin.");
+        u.rate = 1.8;
+        window.speechSynthesis.speak(u);
+      }, 8000);
+    };
+
+    const timer = setTimeout(init, 600);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (repeatTimer) clearInterval(repeatTimer);
+      window.speechSynthesis.removeEventListener("voiceschanged", speak);
+      window.speechSynthesis.cancel();
+    };
   }, []);
 
   return (
     <div
       className="fixed inset-0 z-50 cursor-pointer"
       style={{
-        background: "#0a0a0a",
+        background: "#0f0f0f",
         animation: dismissing ? "fadeOut 0.4s ease-out forwards" : undefined,
       }}
       onClick={onStart}
@@ -60,56 +91,51 @@ function IntroScreen({
       tabIndex={0}
       aria-label="Tap anywhere to begin using SceneSpeak"
     >
-      {/* Border frame */}
-      <div className="absolute inset-4 border border-white/[0.08]" />
-
       {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-8">
-        <h1
-          className="font-[family-name:var(--font-pixel)] text-white text-2xl sm:text-3xl text-center leading-relaxed"
-          style={{ animation: "fadeInUp 0.6s ease-out" }}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-10">
+        <div
+          className="w-20 h-20 rounded-full bg-white/[0.05] flex items-center justify-center mb-8"
+          style={{ animation: "fadeInUp 0.5s ease-out" }}
         >
-          SCENESPEAK
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/50">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+
+        <h1
+          className="text-white text-[28px] font-semibold"
+          style={{ animation: "fadeInUp 0.5s ease-out 0.05s both" }}
+        >
+          SceneSpeak
         </h1>
 
         <p
-          className="text-white/40 text-sm mt-6 tracking-widest uppercase"
-          style={{ animation: "fadeInUp 0.6s ease-out 0.1s both" }}
+          className="text-white/40 text-[15px] mt-2"
+          style={{ animation: "fadeInUp 0.5s ease-out 0.1s both" }}
         >
-          AI-powered visual guide
+          Your AI visual assistant
         </p>
 
         <div
-          className="mt-16 flex items-center gap-2"
-          style={{ animation: "fadeInUp 0.6s ease-out 0.2s both" }}
+          className="mt-16 bg-white/[0.06] rounded-full px-6 py-3"
+          style={{ animation: "fadeInUp 0.5s ease-out 0.2s both" }}
         >
-          <span className="font-[family-name:var(--font-pixel)] text-white/20 text-[10px]">
-            [
-          </span>
-          <span className="font-[family-name:var(--font-pixel)] text-white/30 text-[10px] tracking-wider">
-            TAP TO BEGIN
-          </span>
-          <span
-            className="font-[family-name:var(--font-pixel)] text-white/30 text-[10px]"
-            style={{ animation: "blink 1s step-end infinite" }}
-          >
-            _
-          </span>
-          <span className="font-[family-name:var(--font-pixel)] text-white/20 text-[10px]">
-            ]
-          </span>
+          <p className="text-white/40 text-sm">
+            Tap anywhere to begin
+          </p>
         </div>
       </div>
 
       {/* Bottom info */}
       <div
         className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-1"
-        style={{ animation: "fadeInUp 0.6s ease-out 0.4s both" }}
+        style={{ animation: "fadeInUp 0.5s ease-out 0.3s both" }}
       >
-        <p className="text-white/15 text-[10px] font-[family-name:var(--font-pixel)] tracking-wide">
-          HOOK &apos;EM HACKS 2026
+        <p className="text-white/20 text-[11px]">
+          Hook &apos;Em Hacks 2026
         </p>
-        <p className="text-white/10 text-[9px] tracking-widest uppercase">
+        <p className="text-white/15 text-[10px]">
           Multimodal Search &amp; Generation
         </p>
       </div>
@@ -128,6 +154,7 @@ export default function Home() {
   const transcriptRef = useRef("");
   const isListeningRef = useRef(false);
   const historyRef = useRef<Message[]>([]);
+  const sessionIdRef = useRef(0);
 
   const [introState, setIntroState] = useState<
     "visible" | "dismissing" | "hidden"
@@ -135,6 +162,7 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [isListening, setIsListening] = useState(false);
   const [responseText, setResponseText] = useState<string | null>(null);
+  const [sessionHistory, setSessionHistory] = useState<SessionEntry[]>([]);
 
   useEffect(() => {
     isListeningRef.current = isListening;
@@ -194,6 +222,7 @@ export default function Home() {
   const speakFallback = useCallback((text: string | null) => {
     if (text) {
       const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.8;
       u.onend = () => setAppState("idle");
       u.onerror = () => setAppState("idle");
       window.speechSynthesis.speak(u);
@@ -202,92 +231,114 @@ export default function Home() {
     }
   }, []);
 
-  const processRequest = useCallback(async (transcript: string) => {
-    if (!transcript) {
-      setAppState("idle");
-      return;
-    }
+  const addSessionEntry = useCallback(
+    (thumbnail: string, question: string, answer: string) => {
+      setSessionHistory((prev) => [
+        ...prev,
+        {
+          id: ++sessionIdRef.current,
+          thumbnail,
+          question,
+          answer,
+          timestamp: Date.now(),
+        },
+      ]);
+    },
+    []
+  );
 
-    setAppState("thinking");
-
-    const imageBase64 = frameRef.current;
-    if (!imageBase64) {
-      setResponseText("I couldn't capture an image. Please try again.");
-      setAppState("speaking");
-      const u = new SpeechSynthesisUtterance(
-        "I couldn't capture an image. Please try again."
-      );
-      u.onend = () => setAppState("idle");
-      window.speechSynthesis.speak(u);
-      return;
-    }
-
-    const history = historyRef.current;
-    const newHistory: Message[] = [
-      ...history,
-      { role: "user", content: transcript },
-    ];
-
-    try {
-      const response = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageBase64,
-          transcript,
-          history: newHistory.slice(-10),
-        }),
-      });
-
-      const contentType = response.headers.get("content-type");
-
-      if (contentType?.includes("audio/mpeg")) {
-        const blob = await response.blob();
-        const text = decodeURIComponent(
-          response.headers.get("X-Response-Text") || ""
-        );
-        historyRef.current = [
-          ...newHistory,
-          { role: "assistant", content: text },
-        ];
-        setResponseText(text || null);
-        setAppState("speaking");
-
-        const audio = audioRef.current;
-        if (audio) {
-          const url = URL.createObjectURL(blob);
-          audio.src = url;
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            setAppState("idle");
-          };
-          audio.onerror = () => {
-            URL.revokeObjectURL(url);
-            speakFallback(text);
-          };
-          audio.play().catch(() => speakFallback(text));
-        } else {
-          speakFallback(text);
-        }
-      } else {
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        historyRef.current = [
-          ...newHistory,
-          { role: "assistant", content: data.text },
-        ];
-        setResponseText(data.text);
-        setAppState("speaking");
-        speakFallback(data.text);
+  const processRequest = useCallback(
+    async (transcript: string) => {
+      if (!transcript) {
+        setAppState("idle");
+        return;
       }
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : "Something went wrong";
-      setResponseText(msg);
-      setAppState("speaking");
-      speakFallback(msg);
-    }
-  }, [speakFallback]);
+
+      setAppState("thinking");
+
+      const imageBase64 = frameRef.current;
+      if (!imageBase64) {
+        setResponseText("I couldn't capture an image. Please try again.");
+        setAppState("speaking");
+        const u = new SpeechSynthesisUtterance(
+          "I couldn't capture an image. Please try again."
+        );
+        u.rate = 1.8;
+        u.onend = () => setAppState("idle");
+        window.speechSynthesis.speak(u);
+        return;
+      }
+
+      const history = historyRef.current;
+      const newHistory: Message[] = [
+        ...history,
+        { role: "user", content: transcript },
+      ];
+
+      try {
+        const response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: imageBase64,
+            transcript,
+            history: newHistory.slice(-10),
+          }),
+        });
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("audio/mpeg")) {
+          const blob = await response.blob();
+          const text = decodeURIComponent(
+            response.headers.get("X-Response-Text") || ""
+          );
+          historyRef.current = [
+            ...newHistory,
+            { role: "assistant", content: text },
+          ];
+          setResponseText(text || null);
+          setAppState("speaking");
+          addSessionEntry(imageBase64, transcript, text);
+
+          const audio = audioRef.current;
+          if (audio) {
+            const url = URL.createObjectURL(blob);
+            audio.src = url;
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              setAppState("idle");
+            };
+            audio.onerror = () => {
+              URL.revokeObjectURL(url);
+              speakFallback(text);
+            };
+            audio.play().catch(() => speakFallback(text));
+          } else {
+            speakFallback(text);
+          }
+        } else {
+          const data = await response.json();
+          if (data.error) throw new Error(data.error);
+          historyRef.current = [
+            ...newHistory,
+            { role: "assistant", content: data.text },
+          ];
+          setResponseText(data.text);
+          setAppState("speaking");
+          addSessionEntry(imageBase64, transcript, data.text);
+          speakFallback(data.text);
+        }
+      } catch (error: unknown) {
+        const msg =
+          error instanceof Error ? error.message : "Something went wrong";
+        setResponseText(msg);
+        setAppState("speaking");
+        speakFallback(msg);
+      }
+    },
+    [speakFallback, addSessionEntry]
+  );
 
   const handleScreenTap = useCallback(() => {
     const audio = audioRef.current;
@@ -344,6 +395,7 @@ export default function Home() {
           state={appState}
           isListening={isListening}
           responseText={responseText}
+          sessionHistory={sessionHistory}
         />
       )}
 
