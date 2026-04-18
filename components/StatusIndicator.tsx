@@ -1,16 +1,13 @@
 "use client";
 
-import { AppState, AppMode, SessionEntry } from "@/lib/types";
+import { AppState, SessionEntry } from "@/lib/types";
 
 interface StatusIndicatorProps {
   state: AppState;
-  mode: AppMode;
   isListening: boolean;
-  guardianActive: boolean;
   responseText: string | null;
   sessionHistory: SessionEntry[];
   onReplayEntry?: (entry: SessionEntry) => void;
-  onSwitchMode?: () => void;
 }
 
 function formatTime(ts: number) {
@@ -40,13 +37,10 @@ function StatusPill({
 
 export default function StatusIndicator({
   state,
-  mode,
   isListening,
-  guardianActive,
   responseText,
   sessionHistory,
   onReplayEntry,
-  onSwitchMode,
 }: StatusIndicatorProps) {
   return (
     <div
@@ -58,42 +52,22 @@ export default function StatusIndicator({
       <div className="flex justify-between items-center px-5 pt-14">
         <span className="text-white/50 text-xs font-medium">SceneSpeak</span>
 
-        <div className="flex items-center gap-2">
-          {/* State pill */}
-          {isListening && (
-            <StatusPill label="Listening" color="bg-red-400" animate />
-          )}
-          {state === "thinking" && (
-            <StatusPill label="Analyzing" color="bg-amber-400" animate />
-          )}
-          {state === "speaking" && (
-            <StatusPill label="Speaking" color="bg-emerald-400" />
-          )}
-          {state === "idle" && mode === "guardian" && guardianActive && (
-            <StatusPill label="Scanning" color="bg-blue-400" animate />
-          )}
-          {state === "idle" && !(mode === "guardian" && guardianActive) && (
-            <StatusPill label="Ready" color="bg-white/40" />
-          )}
-
-          {/* Mode switch button */}
-          <button
-            className="pointer-events-auto bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5 active:bg-white/10 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSwitchMode?.();
-            }}
-            aria-label={`Switch to ${mode === "ask" ? "Guardian" : "Ask"} mode`}
-          >
-            <span className="text-white/60 text-[10px] font-semibold tracking-wide">
-              {mode === "ask" ? "ASK" : "GUARD"}
-            </span>
-          </button>
-        </div>
+        {isListening && (
+          <StatusPill label="Listening" color="bg-red-400" animate />
+        )}
+        {state === "thinking" && (
+          <StatusPill label="Analyzing" color="bg-amber-400" animate />
+        )}
+        {state === "speaking" && (
+          <StatusPill label="Speaking" color="bg-emerald-400" />
+        )}
+        {state === "idle" && (
+          <StatusPill label="Ready" color="bg-white/40" />
+        )}
       </div>
 
       {/* ── Center prompt ───────────────────────────────── */}
-      {state === "idle" && mode === "ask" && (
+      {state === "idle" && (
         <div className="flex-1 flex items-center justify-center px-8">
           <div className="flex flex-col items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-white/[0.07] flex items-center justify-center">
@@ -106,29 +80,6 @@ export default function StatusIndicator({
             </div>
             <p className="text-white/30 text-sm text-center leading-relaxed">
               Tap anywhere to ask a question
-            </p>
-          </div>
-        </div>
-      )}
-
-      {state === "idle" && mode === "guardian" && (
-        <div className="flex-1 flex items-center justify-center px-8">
-          <div className="flex flex-col items-center gap-4">
-            <div
-              className={`w-14 h-14 rounded-full flex items-center justify-center ${guardianActive ? "bg-blue-500/15" : "bg-white/[0.07]"}`}
-              style={guardianActive ? { animation: "breathe 3s ease-in-out infinite" } : undefined}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={guardianActive ? "text-blue-400" : "text-white/40"}>
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
-            <p className="text-white/30 text-sm text-center leading-relaxed">
-              {guardianActive
-                ? "Guardian active — monitoring surroundings"
-                : "Guardian paused — double-tap to resume"}
-            </p>
-            <p className="text-white/20 text-xs text-center">
-              Tap to ask a question
             </p>
           </div>
         </div>

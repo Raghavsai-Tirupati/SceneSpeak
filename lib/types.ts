@@ -4,7 +4,6 @@ export interface Message {
 }
 
 export type AppState = "idle" | "listening" | "thinking" | "speaking";
-export type AppMode = "ask" | "guardian";
 
 export interface AskRequest {
   image: string;
