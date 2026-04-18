@@ -9,6 +9,7 @@ import {
 } from "react";
 
 export interface CameraFeedHandle {
+  capture: () => string | null;
   captureAndFreeze: () => string | null;
   unfreeze: () => void;
 }
@@ -50,6 +51,27 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
   }, []);
 
   useImperativeHandle(ref, () => ({
+    capture(): string | null {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return null;
+
+      const maxWidth = 1024;
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+    },
+
     captureAndFreeze(): string | null {
       const video = videoRef.current;
       const canvas = canvasRef.current;
