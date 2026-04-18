@@ -3,43 +3,101 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraFeed, { CameraFeedHandle } from "@/components/CameraFeed";
 import VoiceInput from "@/components/VoiceInput";
-import AudioPlayer from "@/components/AudioPlayer";
 import StatusIndicator from "@/components/StatusIndicator";
 import { AppState, Message } from "@/lib/types";
 
+// Tiny silent WAV to unlock Safari audio playback on user gesture
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+
+function playChime(freq: number) {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    gain.gain.value = 0.15;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+  } catch {
+    // Non-critical
+  }
+}
+
 export default function Home() {
   const cameraRef = useRef<CameraFeedHandle>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const frameRef = useRef<string | null>(null);
+  const frameTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [appState, setAppState] = useState<AppState>("idle");
   const [history, setHistory] = useState<Message[]>([]);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [fallbackText, setFallbackText] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
 
   // Welcome message on first load
   useEffect(() => {
     const timer = setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(
+      const u = new SpeechSynthesisUtterance(
         "Welcome to SceneSpeak. Tap anywhere to ask a question."
       );
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(u);
     }, 500);
     return () => clearTimeout(timer);
   }, []);
 
+  // Play audio blob or fall back to browser speech synthesis
+  const playAudio = useCallback(
+    (blob: Blob | null, text: string | null) => {
+      const audio = audioRef.current;
+
+      const fallbackToSpeech = (t: string | null) => {
+        if (t) {
+          const u = new SpeechSynthesisUtterance(t);
+          u.onend = () => setAppState("idle");
+          u.onerror = () => setAppState("idle");
+          window.speechSynthesis.speak(u);
+        } else {
+          setAppState("idle");
+        }
+      };
+
+      if (blob && audio) {
+        const url = URL.createObjectURL(blob);
+        audio.src = url;
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          setAppState("idle");
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(url);
+          fallbackToSpeech(text);
+        };
+        audio.play().catch(() => fallbackToSpeech(text));
+      } else {
+        fallbackToSpeech(text);
+      }
+    },
+    []
+  );
+
+  // Called by VoiceInput when user stops recording
   const handleTranscript = useCallback(
     async (transcript: string) => {
-      setAppState("thinking");
-
-      // Capture current frame
-      const imageBase64 = cameraRef.current?.captureFrame();
-      if (!imageBase64) {
+      if (!transcript) {
         setAppState("idle");
         return;
       }
 
-      // Add user message to history
+      setAppState("thinking");
+
+      const imageBase64 = frameRef.current;
+      if (!imageBase64) {
+        setAppState("speaking");
+        playAudio(null, "I couldn't capture an image. Please try again.");
+        return;
+      }
+
       const newHistory: Message[] = [
         ...history,
         { role: "user", content: transcript },
@@ -67,46 +125,57 @@ export default function Home() {
             ...newHistory,
             { role: "assistant", content: responseText },
           ]);
-          setAudioBlob(blob);
-          setFallbackText(responseText || null);
           setAppState("speaking");
+          playAudio(blob, responseText || null);
         } else {
           const data = await response.json();
-          if (data.error) {
-            throw new Error(data.error);
-          }
+          if (data.error) throw new Error(data.error);
           setHistory([
             ...newHistory,
             { role: "assistant", content: data.text },
           ]);
-          setAudioBlob(null);
-          setFallbackText(data.text);
           setAppState("speaking");
+          playAudio(null, data.text);
         }
       } catch (error) {
         console.error("Request failed:", error);
-        setAudioBlob(null);
-        setFallbackText("Sorry, something went wrong. Please try again.");
         setAppState("speaking");
+        playAudio(null, "Sorry, something went wrong. Please try again.");
       }
     },
-    [history]
+    [history, playAudio]
   );
 
-  const handleAudioFinished = useCallback(() => {
-    setAudioBlob(null);
-    setFallbackText(null);
-    setAppState("idle");
-  }, []);
-
-  const handleListeningChange = useCallback((listening: boolean) => {
-    setIsListening(listening);
-    if (listening) {
-      setAppState("listening");
+  // Full-screen tap handler
+  const handleScreenTap = useCallback(() => {
+    // Unlock <audio> element on every tap (Safari requires user gesture)
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = SILENT_WAV;
+      audio.play().then(() => audio.pause()).catch(() => {});
     }
-  }, []);
+    // Unlock SpeechSynthesis too
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
 
-  const isBusy = appState === "thinking" || appState === "speaking";
+    const isBusy = appState === "thinking" || appState === "speaking";
+    if (isBusy) return;
+
+    if (isListening) {
+      // Stop listening — low chime
+      playChime(440);
+      setIsListening(false);
+      if (frameTimeoutRef.current) clearTimeout(frameTimeoutRef.current);
+    } else {
+      // Start listening — high chime
+      playChime(1200);
+      setIsListening(true);
+      setAppState("listening");
+      // Capture frame 500ms after user starts talking
+      frameTimeoutRef.current = setTimeout(() => {
+        frameRef.current = cameraRef.current?.captureFrame() || null;
+      }, 500);
+    }
+  }, [appState, isListening]);
 
   return (
     <main className="fixed inset-0 bg-[#111]">
@@ -116,19 +185,31 @@ export default function Home() {
       {/* Status indicator with pulsing red dot */}
       <StatusIndicator state={appState} isListening={isListening} />
 
-      {/* Audio player */}
-      <AudioPlayer
-        audioBlob={audioBlob}
-        fallbackText={appState === "speaking" ? fallbackText : null}
-        onFinished={handleAudioFinished}
-      />
+      {/* Pre-unlocked audio element for playback */}
+      <audio ref={audioRef} className="hidden" playsInline />
 
-      {/* Voice input — registers full-screen tap handler */}
-      <VoiceInput
-        onTranscript={handleTranscript}
-        isDisabled={isBusy}
-        isListening={isListening}
-        onListeningChange={handleListeningChange}
+      {/* Speech recognition controller */}
+      <VoiceInput onTranscript={handleTranscript} isListening={isListening} />
+
+      {/* Full-screen tap target */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={handleScreenTap}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          handleScreenTap();
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={
+          isListening
+            ? "Tap to stop recording and send your question"
+            : appState === "thinking"
+              ? "Processing your question"
+              : appState === "speaking"
+                ? "Playing response"
+                : "Tap anywhere to start speaking your question"
+        }
       />
     </main>
   );
