@@ -7,6 +7,7 @@ interface StatusIndicatorProps {
   isListening: boolean;
   responseText: string | null;
   sessionHistory: SessionEntry[];
+  onReplayEntry?: (entry: SessionEntry) => void;
 }
 
 function formatTime(ts: number) {
@@ -39,6 +40,7 @@ export default function StatusIndicator({
   isListening,
   responseText,
   sessionHistory,
+  onReplayEntry,
 }: StatusIndicatorProps) {
   return (
     <div
@@ -148,18 +150,26 @@ export default function StatusIndicator({
             </div>
             <div className="flex gap-3 overflow-x-auto hide-scrollbar pointer-events-auto">
               {sessionHistory.map((entry) => (
-                <div key={entry.id} className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/10">
+                <button
+                  key={entry.id}
+                  className="flex-shrink-0 text-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReplayEntry?.(entry);
+                  }}
+                  aria-label={`Replay response for: ${entry.question}`}
+                >
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/10 active:border-white/30 transition-colors">
                     <img
                       src={`data:image/jpeg;base64,${entry.thumbnail}`}
                       alt={entry.question}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-white/25 text-[10px] mt-1.5 w-16 truncate text-center">
+                  <p className="text-white/25 text-[10px] mt-1.5 w-16 truncate">
                     {formatTime(entry.timestamp)}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           </div>

@@ -231,6 +231,21 @@ export default function Home() {
     }
   }, []);
 
+  const replayEntry = useCallback(
+    (entry: SessionEntry) => {
+      if (appState === "thinking" || appState === "speaking") return;
+      window.speechSynthesis.cancel();
+      setResponseText(entry.answer);
+      setAppState("speaking");
+      const u = new SpeechSynthesisUtterance(entry.answer);
+      u.rate = 1.8;
+      u.onend = () => setAppState("idle");
+      u.onerror = () => setAppState("idle");
+      window.speechSynthesis.speak(u);
+    },
+    [appState]
+  );
+
   const addSessionEntry = useCallback(
     (thumbnail: string, question: string, answer: string) => {
       setSessionHistory((prev) => [
@@ -305,6 +320,7 @@ export default function Home() {
           if (audio) {
             const url = URL.createObjectURL(blob);
             audio.src = url;
+            audio.playbackRate = 1.4;
             audio.onended = () => {
               URL.revokeObjectURL(url);
               setAppState("idle");
@@ -396,6 +412,7 @@ export default function Home() {
           isListening={isListening}
           responseText={responseText}
           sessionHistory={sessionHistory}
+          onReplayEntry={replayEntry}
         />
       )}
 
