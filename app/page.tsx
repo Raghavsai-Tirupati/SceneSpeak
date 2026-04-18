@@ -25,6 +25,75 @@ function playChime(freq: number) {
   }
 }
 
+// ─── Intro Screen ───────────────────────────────────────────────────────────
+
+function IntroScreen({ onStart }: { onStart: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(
+        "Welcome to SceneSpeak. Tap anywhere to begin."
+      );
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer"
+      style={{
+        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+        backgroundSize: "400% 400%",
+        animation: "gradientShift 8s ease infinite",
+      }}
+      onClick={onStart}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        onStart();
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Tap anywhere to begin using SceneSpeak"
+    >
+      {/* Logo */}
+      <h1
+        className="text-white text-6xl font-bold tracking-tight"
+        style={{ animation: "fadeInUp 0.8s ease-out" }}
+      >
+        SceneSpeak
+      </h1>
+
+      {/* Tagline */}
+      <p
+        className="text-white/70 text-xl mt-3"
+        style={{ animation: "fadeInUp 0.8s ease-out 0.2s both" }}
+      >
+        Your AI-powered visual guide
+      </p>
+
+      {/* Tap prompt */}
+      <p
+        className="text-white/40 text-base mt-16"
+        style={{ animation: "pulse-slow 2.5s ease-in-out infinite" }}
+      >
+        Tap anywhere to begin
+      </p>
+
+      {/* Hackathon credit */}
+      <p
+        className="absolute bottom-10 text-white/30 text-xs text-center px-4"
+        style={{ animation: "fadeInUp 0.8s ease-out 0.5s both" }}
+      >
+        Built for Hook &apos;Em Hacks 2026 &mdash; Multimodal Search &amp;
+        Generation
+      </p>
+    </div>
+  );
+}
+
+// ─── Main App ───────────────────────────────────────────────────────────────
+
 export default function Home() {
   const cameraRef = useRef<CameraFeedHandle>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -35,6 +104,7 @@ export default function Home() {
   const isListeningRef = useRef(false);
   const historyRef = useRef<Message[]>([]);
 
+  const [showIntro, setShowIntro] = useState(true);
   const [appState, setAppState] = useState<AppState>("idle");
   const [isListening, setIsListening] = useState(false);
   const [responseText, setResponseText] = useState<string | null>(null);
@@ -43,17 +113,6 @@ export default function Home() {
   useEffect(() => {
     isListeningRef.current = isListening;
   }, [isListening]);
-
-  // Welcome message on first load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const u = new SpeechSynthesisUtterance(
-        "Welcome to SceneSpeak. Tap anywhere to ask a question."
-      );
-      window.speechSynthesis.speak(u);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Initialize speech recognition once
   useEffect(() => {
@@ -96,6 +155,20 @@ export default function Home() {
       setResponseText(null);
     }
   }, [appState]);
+
+  // Dismiss intro and enter the app
+  const handleIntroTap = useCallback(() => {
+    // Unlock audio during this user gesture
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = SILENT_WAV;
+      audio.play().then(() => audio.pause()).catch(() => {});
+    }
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+
+    setShowIntro(false);
+  }, []);
 
   // Process the transcript: call Gemini API then play audio response
   const processRequest = useCallback(async (transcript: string) => {
@@ -258,39 +331,46 @@ export default function Home() {
 
   return (
     <main className="fixed inset-0 bg-[#111]">
+      {/* Intro screen — shown once per session */}
+      {showIntro && <IntroScreen onStart={handleIntroTap} />}
+
       {/* Camera feed (live or frozen) */}
       <CameraFeed ref={cameraRef} />
 
       {/* Status indicator + response text */}
-      <StatusIndicator
-        state={appState}
-        isListening={isListening}
-        responseText={responseText}
-      />
+      {!showIntro && (
+        <StatusIndicator
+          state={appState}
+          isListening={isListening}
+          responseText={responseText}
+        />
+      )}
 
       {/* Pre-unlocked audio element for playback */}
       <audio ref={audioRef} className="hidden" playsInline />
 
-      {/* Full-screen tap target */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={handleScreenTap}
-        onTouchStart={(e) => {
-          e.preventDefault();
-          handleScreenTap();
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={
-          isListening
-            ? "Tap to stop recording and send your question"
-            : appState === "thinking"
-              ? "Analyzing your question"
-              : appState === "speaking"
-                ? "Playing response"
-                : "Tap anywhere to start speaking your question"
-        }
-      />
+      {/* Full-screen tap target (only active after intro dismissed) */}
+      {!showIntro && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={handleScreenTap}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            handleScreenTap();
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={
+            isListening
+              ? "Tap to stop recording and send your question"
+              : appState === "thinking"
+                ? "Analyzing your question"
+                : appState === "speaking"
+                  ? "Playing response"
+                  : "Tap anywhere to start speaking your question"
+          }
+        />
+      )}
     </main>
   );
 }
