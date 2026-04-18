@@ -37,9 +37,10 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error("API error:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("API error:", errMsg);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: errMsg },
       { status: 500 }
     );
   }
