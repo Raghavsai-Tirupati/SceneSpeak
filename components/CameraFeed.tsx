@@ -9,13 +9,16 @@ import {
 } from "react";
 
 export interface CameraFeedHandle {
-  captureFrame: () => string | null;
+  captureAndFreeze: () => string | null;
+  unfreeze: () => void;
 }
 
 const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [frozenSrc, setFrozenSrc] = useState<string | null>(null);
+  const [showFlash, setShowFlash] = useState(false);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -47,7 +50,7 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
   }, []);
 
   useImperativeHandle(ref, () => ({
-    captureFrame(): string | null {
+    captureAndFreeze(): string | null {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return null;
@@ -68,9 +71,19 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
       if (!ctx) return null;
 
       ctx.drawImage(video, 0, 0, width, height);
+
+      // Freeze: show the captured frame as a still image
+      setFrozenSrc(canvas.toDataURL("image/jpeg", 0.9));
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 350);
+
+      // Return base64 for the API (lower quality to save bandwidth)
       const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-      // Strip the data:image/jpeg;base64, prefix
       return dataUrl.split(",")[1];
+    },
+
+    unfreeze() {
+      setFrozenSrc(null);
     },
   }));
 
@@ -87,15 +100,35 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
 
   return (
     <>
+      {/* Live camera feed — hidden when frozen */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="fixed inset-0 w-full h-full object-cover"
+        className={`fixed inset-0 w-full h-full object-cover ${frozenSrc ? "invisible" : ""}`}
         aria-hidden="true"
       />
       <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
+
+      {/* Frozen still image */}
+      {frozenSrc && (
+        <img
+          src={frozenSrc}
+          alt=""
+          className="fixed inset-0 w-full h-full object-cover"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Camera flash effect */}
+      {showFlash && (
+        <div
+          className="fixed inset-0 bg-white pointer-events-none z-30"
+          style={{ animation: "cameraFlash 0.35s ease-out forwards" }}
+          aria-hidden="true"
+        />
+      )}
     </>
   );
 });

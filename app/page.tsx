@@ -34,6 +34,7 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [history, setHistory] = useState<Message[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [responseText, setResponseText] = useState<string | null>(null);
 
   // Welcome message on first load
   useEffect(() => {
@@ -46,40 +47,45 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Unfreeze camera whenever we return to idle
+  useEffect(() => {
+    if (appState === "idle") {
+      cameraRef.current?.unfreeze();
+      setResponseText(null);
+    }
+  }, [appState]);
+
   // Play audio blob or fall back to browser speech synthesis
-  const playAudio = useCallback(
-    (blob: Blob | null, text: string | null) => {
-      const audio = audioRef.current;
+  const playAudio = useCallback((blob: Blob | null, text: string | null) => {
+    const audio = audioRef.current;
 
-      const fallbackToSpeech = (t: string | null) => {
-        if (t) {
-          const u = new SpeechSynthesisUtterance(t);
-          u.onend = () => setAppState("idle");
-          u.onerror = () => setAppState("idle");
-          window.speechSynthesis.speak(u);
-        } else {
-          setAppState("idle");
-        }
-      };
-
-      if (blob && audio) {
-        const url = URL.createObjectURL(blob);
-        audio.src = url;
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          setAppState("idle");
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          fallbackToSpeech(text);
-        };
-        audio.play().catch(() => fallbackToSpeech(text));
+    const fallbackToSpeech = (t: string | null) => {
+      if (t) {
+        const u = new SpeechSynthesisUtterance(t);
+        u.onend = () => setAppState("idle");
+        u.onerror = () => setAppState("idle");
+        window.speechSynthesis.speak(u);
       } else {
-        fallbackToSpeech(text);
+        setAppState("idle");
       }
-    },
-    []
-  );
+    };
+
+    if (blob && audio) {
+      const url = URL.createObjectURL(blob);
+      audio.src = url;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        setAppState("idle");
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        fallbackToSpeech(text);
+      };
+      audio.play().catch(() => fallbackToSpeech(text));
+    } else {
+      fallbackToSpeech(text);
+    }
+  }, []);
 
   // Called by VoiceInput when user stops recording
   const handleTranscript = useCallback(
@@ -94,6 +100,7 @@ export default function Home() {
       const imageBase64 = frameRef.current;
       if (!imageBase64) {
         setAppState("speaking");
+        setResponseText("I couldn't capture an image. Please try again.");
         playAudio(null, "I couldn't capture an image. Please try again.");
         return;
       }
@@ -118,15 +125,13 @@ export default function Home() {
 
         if (contentType?.includes("audio/mpeg")) {
           const blob = await response.blob();
-          const responseText = decodeURIComponent(
+          const text = decodeURIComponent(
             response.headers.get("X-Response-Text") || ""
           );
-          setHistory([
-            ...newHistory,
-            { role: "assistant", content: responseText },
-          ]);
+          setHistory([...newHistory, { role: "assistant", content: text }]);
+          setResponseText(text || null);
           setAppState("speaking");
-          playAudio(blob, responseText || null);
+          playAudio(blob, text || null);
         } else {
           const data = await response.json();
           if (data.error) throw new Error(data.error);
@@ -134,13 +139,16 @@ export default function Home() {
             ...newHistory,
             { role: "assistant", content: data.text },
           ]);
+          setResponseText(data.text);
           setAppState("speaking");
           playAudio(null, data.text);
         }
       } catch (error) {
         console.error("Request failed:", error);
+        const errMsg = "Sorry, something went wrong. Please try again.";
+        setResponseText(errMsg);
         setAppState("speaking");
-        playAudio(null, "Sorry, something went wrong. Please try again.");
+        playAudio(null, errMsg);
       }
     },
     [history, playAudio]
@@ -161,29 +169,33 @@ export default function Home() {
     if (isBusy) return;
 
     if (isListening) {
-      // Stop listening — low chime
+      // === STOP LISTENING ===
       playChime(440);
       setIsListening(false);
       if (frameTimeoutRef.current) clearTimeout(frameTimeoutRef.current);
     } else {
-      // Start listening — high chime
+      // === START LISTENING ===
       playChime(1200);
       setIsListening(true);
       setAppState("listening");
-      // Capture frame 500ms after user starts talking
+      // Capture photo 500ms after tap — freezes the camera with flash
       frameTimeoutRef.current = setTimeout(() => {
-        frameRef.current = cameraRef.current?.captureFrame() || null;
+        frameRef.current = cameraRef.current?.captureAndFreeze() || null;
       }, 500);
     }
   }, [appState, isListening]);
 
   return (
     <main className="fixed inset-0 bg-[#111]">
-      {/* Camera background */}
+      {/* Camera feed (live or frozen) */}
       <CameraFeed ref={cameraRef} />
 
-      {/* Status indicator with pulsing red dot */}
-      <StatusIndicator state={appState} isListening={isListening} />
+      {/* Status indicator + response text */}
+      <StatusIndicator
+        state={appState}
+        isListening={isListening}
+        responseText={responseText}
+      />
 
       {/* Pre-unlocked audio element for playback */}
       <audio ref={audioRef} className="hidden" playsInline />
@@ -205,7 +217,7 @@ export default function Home() {
           isListening
             ? "Tap to stop recording and send your question"
             : appState === "thinking"
-              ? "Processing your question"
+              ? "Analyzing your question"
               : appState === "speaking"
                 ? "Playing response"
                 : "Tap anywhere to start speaking your question"

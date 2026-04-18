@@ -14,3 +14,12 @@ body {
   user-select: none;
   touch-action: manipulation;
 }
+
+@keyframes cameraFlash {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}

@@ -5,18 +5,20 @@ import { AppState } from "@/lib/types";
 interface StatusIndicatorProps {
   state: AppState;
   isListening: boolean;
+  responseText: string | null;
 }
 
 const stateLabels: Record<AppState, string> = {
   idle: "Tap anywhere to ask",
   listening: "Listening — tap to send",
-  thinking: "Thinking...",
+  thinking: "Analyzing...",
   speaking: "Speaking...",
 };
 
 export default function StatusIndicator({
   state,
   isListening,
+  responseText,
 }: StatusIndicatorProps) {
   return (
     <div
@@ -30,11 +32,20 @@ export default function StatusIndicator({
         </p>
       </div>
 
-      {/* Pulsing red dot visible to sighted users while recording */}
+      {/* Pulsing red dot while recording */}
       {isListening && (
         <div className="relative flex items-center justify-center">
           <span className="absolute w-6 h-6 rounded-full bg-red-500/50 animate-ping" />
           <span className="relative w-4 h-4 rounded-full bg-red-500" />
+        </div>
+      )}
+
+      {/* AI response text shown while speaking */}
+      {state === "speaking" && responseText && (
+        <div className="bg-black/70 backdrop-blur-sm rounded-2xl px-5 py-4 mx-4 max-w-md">
+          <p className="text-white text-base leading-relaxed text-center">
+            {responseText}
+          </p>
         </div>
       )}
     </div>
