@@ -111,66 +111,60 @@ function IntroScreen({
         </p>
       </div>
 
-      {/* ── Mode buttons ─────────────────────────────── */}
+      {/* ── Mode options — typography only ──────────── */}
       <div
-        className="relative z-10 flex flex-col gap-3 px-8 mt-10"
+        className="relative z-10 flex flex-col px-8 mt-12"
         style={{ animation: "fadeInUp 0.5s ease-out 0.15s both" }}
       >
+        <div className="w-full h-px bg-[#222222]" />
+
         <button
-          className="w-full rounded-2xl bg-[#111111] border border-[#222222] p-5 text-left active:bg-[#1A1A1A] transition-colors min-h-[72px]"
+          className="w-full py-6 text-left active:opacity-60 transition-opacity min-h-[44px]"
           onClick={() => {
             unlockAudio();
             onSelectMode("scene");
           }}
           aria-label="Scene Mode: Tap to ask questions about what the camera sees"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#4FC3F7]/15 flex items-center justify-center flex-shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#4FC3F7]">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
+          <div className="flex items-baseline justify-between">
             <div>
-              <p className="text-white text-[18px] font-medium">Scene Mode</p>
-              <p className="text-[#808080] text-[14px] mt-0.5">
+              <p className="text-white text-[24px] sm:text-[28px] font-medium">
+                <span className="text-[#4FC3F7]">01</span>
+                <span className="ml-4">Scene Mode</span>
+              </p>
+              <p className="text-[#666666] text-[14px] mt-1 ml-[52px]">
                 Ask about what you see
               </p>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#333333] ml-auto flex-shrink-0">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <span className="text-[#333333] text-[24px] font-light">&rarr;</span>
           </div>
         </button>
 
+        <div className="w-full h-px bg-[#222222]" />
+
         <button
-          className="w-full rounded-2xl bg-[#111111] border border-[#222222] p-5 text-left active:bg-[#1A1A1A] transition-colors min-h-[72px]"
+          className="w-full py-6 text-left active:opacity-60 transition-opacity min-h-[44px]"
           onClick={() => {
             unlockAudio();
             onSelectMode("read");
           }}
           aria-label="Read Mode: Read any text the camera sees"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#81C784]/15 flex items-center justify-center flex-shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#81C784]">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-            </div>
+          <div className="flex items-baseline justify-between">
             <div>
-              <p className="text-white text-[18px] font-medium">Read Mode</p>
-              <p className="text-[#808080] text-[14px] mt-0.5">
+              <p className="text-white text-[24px] sm:text-[28px] font-medium">
+                <span className="text-[#81C784]">02</span>
+                <span className="ml-4">Read Mode</span>
+              </p>
+              <p className="text-[#666666] text-[14px] mt-1 ml-[52px]">
                 Read signs, menus, documents
               </p>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#333333] ml-auto flex-shrink-0">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <span className="text-[#333333] text-[24px] font-light">&rarr;</span>
           </div>
         </button>
+
+        <div className="w-full h-px bg-[#222222]" />
       </div>
 
       {/* ── Geometric shapes — decorative ─────────────── */}
