@@ -55,6 +55,7 @@ export default function Home() {
   const [responseText, setResponseText] = useState<string | null>(null);
   const [voiceListening, setVoiceListening] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+  const [eyeOpen, setEyeOpen] = useState(false);
 
   useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
@@ -188,8 +189,11 @@ export default function Home() {
         speakText("Read mode. Tap anywhere and I'll read any text in view.");
       }
 
-      setScreen("dismissing");
-      setTimeout(() => setScreen("camera"), 400);
+      setEyeOpen(true);
+      setTimeout(() => {
+        setScreen("dismissing");
+        setTimeout(() => setScreen("camera"), 500);
+      }, 1300);
     },
     []
   );
@@ -398,7 +402,7 @@ export default function Home() {
           className="fixed inset-0 z-50 flex"
           style={{
             background: "#000",
-            animation: screen === "dismissing" ? "fadeOut 0.4s ease-out forwards" : undefined,
+            animation: screen === "dismissing" ? "fadeOut 0.5s ease-out forwards" : undefined,
           }}
         >
           {/* Tap-to-start overlay — uses onTouchStart (required for iOS speechSynthesis) */}
@@ -432,18 +436,8 @@ export default function Home() {
               Scene Mode
             </span>
 
-            <div
-              className="triptych-icon"
-              style={{ background: "rgba(79,195,247,0.05)", animationDelay: "0s" }}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4FC3F7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
-
-            <p className="text-white text-[15px] font-medium mt-5 tracking-wide">Scene</p>
-            <p className="text-[#444] text-[10px] mt-1.5 text-center px-4 leading-relaxed">
+            <p className="text-[#4FC3F7] text-[13px] font-medium tracking-[0.15em] uppercase">Scene</p>
+            <p className="text-[#333] text-[10px] mt-2 text-center px-4 leading-relaxed">
               Describe your surroundings
             </p>
           </button>
@@ -470,49 +464,78 @@ export default function Home() {
               Read Mode
             </span>
 
-            <div
-              className="triptych-icon"
-              style={{ background: "rgba(129,199,132,0.05)", animationDelay: "0.5s" }}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#81C784" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-            </div>
-
-            <p className="text-white text-[15px] font-medium mt-5 tracking-wide">Read</p>
-            <p className="text-[#444] text-[10px] mt-1.5 text-center px-4 leading-relaxed">
+            <p className="text-[#81C784] text-[13px] font-medium tracking-[0.15em] uppercase">Read</p>
+            <p className="text-[#333] text-[10px] mt-2 text-center px-4 leading-relaxed">
               Signs, menus &amp; documents
             </p>
           </button>
 
-          {/* ── Overlaid center branding ──────────────────── */}
-          <div className="absolute inset-0 flex flex-col items-center justify-end pointer-events-none z-10">
-            <div
-              className="flex flex-col items-center mb-6"
-              style={{ animation: "fadeInUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both" }}
-            >
+          {/* ── Center eye + branding overlay ─────────────── */}
+          <div className="absolute inset-0 flex flex-col items-center pointer-events-none z-10">
+            <div className="flex-1 flex flex-col items-center justify-center">
+              {/* Eye */}
+              <svg
+                width="90"
+                height="56"
+                viewBox="0 0 100 60"
+                fill="none"
+                style={{
+                  transform: eyeOpen ? undefined : "scaleY(0.08)",
+                  animation: eyeOpen ? "eyeOpen 0.8s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
+                }}
+              >
+                <path
+                  d="M5 30 Q25 5, 50 5 Q75 5, 95 30 Q75 55, 50 55 Q25 55, 5 30 Z"
+                  stroke="white"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="50" cy="30" r="14"
+                  stroke="white" strokeWidth="1.2"
+                  style={{
+                    opacity: eyeOpen ? undefined : 0,
+                    transform: eyeOpen ? undefined : "scale(0.2)",
+                    transformOrigin: "50px 30px",
+                    animation: eyeOpen ? "pupilReveal 0.5s ease-out 0.35s both" : undefined,
+                  }}
+                />
+                <circle
+                  cx="50" cy="30" r="6"
+                  fill="white"
+                  style={{
+                    opacity: eyeOpen ? undefined : 0,
+                    transform: eyeOpen ? undefined : "scale(0.2)",
+                    transformOrigin: "50px 30px",
+                    animation: eyeOpen ? "pupilReveal 0.5s ease-out 0.35s both" : undefined,
+                  }}
+                />
+              </svg>
+
+              {/* "Iris" text — appears after eye opens */}
               <h1
-                className="text-white text-[40px] sm:text-[48px] leading-[1] tracking-tight"
-                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                className="text-white text-[38px] sm:text-[44px] leading-[1] tracking-tight mt-5"
+                style={{
+                  fontFamily: '"Times New Roman", Times, serif',
+                  opacity: eyeOpen ? undefined : 0,
+                  animation: eyeOpen ? "irisReveal 0.5s ease-out 0.55s both" : undefined,
+                }}
               >
                 Iris
               </h1>
-              <p className="text-[#555] text-[11px] tracking-[0.2em] uppercase mt-2.5">
-                Visual Assistant
-              </p>
+            </div>
+
+            {/* Bottom */}
+            <div className="pb-7 flex flex-col items-center gap-3">
               {voiceListening && (
-                <div className="flex items-center gap-2 mt-4">
+                <div className="flex items-center gap-2">
                   <span
                     className="w-2 h-2 rounded-full bg-[#EF5350]"
                     style={{ animation: "breathe 2s ease-in-out infinite" }}
                   />
-                  <span className="text-[#555] text-[10px]">Say a mode or tap</span>
+                  <span className="text-[#444] text-[10px]">Say a mode or tap</span>
                 </div>
               )}
-              <p className="text-[#222] text-[9px] tracking-[0.2em] uppercase mt-4">
+              <p className="text-[#1a1a1a] text-[9px] tracking-[0.2em] uppercase">
                 Hook &apos;Em Hacks 2026
               </p>
             </div>
