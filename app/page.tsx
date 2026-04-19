@@ -406,23 +406,18 @@ export default function Home() {
       {/* ── Landing screen ─────────────────────────────── */}
       {(screen === "landing" || screen === "dismissing") && (
         <div
-          className="fixed inset-0 z-50 flex flex-col overflow-hidden overflow-y-auto"
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto"
           style={{
             background: "#000000",
             animation: screen === "dismissing" ? "fadeOut 0.4s ease-out forwards" : undefined,
           }}
-          onClick={handleLandingTap}
-          onTouchStart={(e) => {
-            if ((e.target as HTMLElement).closest("button")) return;
-            e.preventDefault();
-            handleLandingTap();
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Tap anywhere to hear the welcome message, or choose a mode"
         >
-          {/* ── Branding ─────────────────────────────────── */}
-          <div className="relative z-10 flex flex-col px-8 pt-16 sm:pt-20">
+          {/* ── Branding (tap here for welcome speech) ────── */}
+          <div
+            className="relative z-10 flex flex-col px-8 pt-16 sm:pt-20 cursor-pointer"
+            onClick={handleLandingTap}
+            onTouchEnd={(e) => { e.preventDefault(); handleLandingTap(); }}
+          >
             <h1
               className="font-[family-name:var(--font-serif)] text-white text-[38px] sm:text-[48px] leading-[1.1] tracking-tight"
               style={{ animation: "fadeInUp 0.5s ease-out" }}
@@ -439,10 +434,10 @@ export default function Home() {
 
           {/* ── Map card ─────────────────────────────────── */}
           <div
-            className="relative z-10 px-8 mt-6"
+            className="relative z-10 px-8 mt-10"
             style={{ animation: "fadeInUp 0.5s ease-out 0.1s both" }}
           >
-            <div className="rounded-2xl overflow-hidden border border-[#222] h-[200px] sm:h-[240px]" style={{ boxShadow: "0 0 30px rgba(0,0,0,0.4)" }}>
+            <div className="rounded-2xl overflow-hidden border border-[#222] h-[220px] sm:h-[260px]" style={{ boxShadow: "0 0 30px rgba(0,0,0,0.4)" }}>
               <HazardMap hazards={landingHazards} userLocation={userLocation} compact />
             </div>
             <div className="flex items-center justify-between mt-3 px-1">
@@ -469,14 +464,15 @@ export default function Home() {
 
           {/* ── Mode buttons ─────────────────────────────── */}
           <div
-            className="relative z-10 flex flex-col px-8 mt-8"
+            className="relative z-10 flex flex-col px-8 mt-10"
             style={{ animation: "fadeInUp 0.5s ease-out 0.15s both" }}
           >
             <div className="w-full h-px bg-[#222222]" />
 
             <button
-              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px] pointer-events-auto"
-              onClick={(e) => { e.stopPropagation(); handleSelectMode("scene"); }}
+              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px]"
+              onClick={() => handleSelectMode("scene")}
+              onTouchEnd={(e) => { e.preventDefault(); handleSelectMode("scene"); }}
               aria-label="Scene Mode: Tap to ask questions about what the camera sees"
             >
               <div className="flex items-baseline justify-between">
@@ -496,8 +492,9 @@ export default function Home() {
             <div className="w-full h-px bg-[#222222]" />
 
             <button
-              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px] pointer-events-auto"
-              onClick={(e) => { e.stopPropagation(); handleSelectMode("read"); }}
+              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px]"
+              onClick={() => handleSelectMode("read")}
+              onTouchEnd={(e) => { e.preventDefault(); handleSelectMode("read"); }}
               aria-label="Read Mode: Read any text the camera sees"
             >
               <div className="flex items-baseline justify-between">
