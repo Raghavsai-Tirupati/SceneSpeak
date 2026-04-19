@@ -436,8 +436,8 @@ export default function Home() {
               Scene Mode
             </span>
 
-            <p className="text-[#4FC3F7] text-[13px] font-medium tracking-[0.15em] uppercase">Scene</p>
-            <p className="text-[#333] text-[10px] mt-2 text-center px-4 leading-relaxed">
+            <p className="text-[#4FC3F7] text-[16px] font-medium tracking-[0.15em] uppercase">Scene</p>
+            <p className="text-[#333] text-[11px] mt-2 text-center px-4 leading-relaxed">
               Describe your surroundings
             </p>
           </button>
@@ -464,8 +464,8 @@ export default function Home() {
               Read Mode
             </span>
 
-            <p className="text-[#81C784] text-[13px] font-medium tracking-[0.15em] uppercase">Read</p>
-            <p className="text-[#333] text-[10px] mt-2 text-center px-4 leading-relaxed">
+            <p className="text-[#81C784] text-[16px] font-medium tracking-[0.15em] uppercase">Read</p>
+            <p className="text-[#333] text-[11px] mt-2 text-center px-4 leading-relaxed">
               Signs, menus &amp; documents
             </p>
           </button>
@@ -475,12 +475,12 @@ export default function Home() {
             <div className="flex-1 flex flex-col items-center justify-center">
               {/* Eye */}
               <svg
-                width="90"
-                height="56"
+                width="130"
+                height="80"
                 viewBox="0 0 100 60"
                 fill="none"
                 style={{
-                  transform: eyeOpen ? undefined : "scaleY(0.08)",
+                  transform: eyeOpen ? undefined : "scaleY(0.15)",
                   animation: eyeOpen ? "eyeOpen 0.8s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
                 }}
               >
@@ -513,7 +513,7 @@ export default function Home() {
 
               {/* "Iris" text — appears after eye opens */}
               <h1
-                className="text-white text-[38px] sm:text-[44px] leading-[1] tracking-tight mt-5"
+                className="text-white text-[48px] sm:text-[56px] leading-[1] tracking-tight mt-5"
                 style={{
                   fontFamily: '"Times New Roman", Times, serif',
                   opacity: eyeOpen ? undefined : 0,
