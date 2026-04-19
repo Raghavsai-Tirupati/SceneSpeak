@@ -121,7 +121,7 @@ export default function Home() {
     }
   }, [appState]);
 
-  // ── First tap anywhere — unlock audio + welcome speech ──
+  // ── First tap anywhere — unlock audio + welcome speech + start listening ──
   const handleFirstTap = useCallback(() => {
     if (audioUnlockedRef.current) return;
     audioUnlockedRef.current = true;
@@ -129,15 +129,9 @@ export default function Home() {
     // Speak welcome FIRST — must be the first speechSynthesis call in the gesture
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(
-      "Welcome to SceneSpeak. Choose a mode to begin."
+      "Welcome to SceneSpeak. Say scene mode or read mode to begin."
     );
     u.rate = 1.8;
-    u.onend = () => {
-      if (!modeSelectedRef.current) startModeListening();
-    };
-    u.onerror = () => {
-      if (!modeSelectedRef.current) startModeListening();
-    };
     window.speechSynthesis.speak(u);
 
     // Unlock HTMLAudioElement after speech is queued
@@ -149,10 +143,16 @@ export default function Home() {
       audioRef.current.play().then(() => audioRef.current?.pause()).catch(() => {});
     }
 
-    // Request mic permission
+    // Request mic permission, then start voice listening immediately
     navigator.mediaDevices?.getUserMedia({ audio: true })
-      .then(stream => stream.getTracks().forEach(t => t.stop()))
-      .catch(() => {});
+      .then(stream => {
+        stream.getTracks().forEach(t => t.stop());
+        if (!modeSelectedRef.current) startModeListening();
+      })
+      .catch(() => {
+        // Even if getUserMedia fails, try speech recognition (it manages its own mic)
+        if (!modeSelectedRef.current) startModeListening();
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
