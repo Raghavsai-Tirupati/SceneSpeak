@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const HISTORY_FILE = path.join(process.cwd(), "data", "history.json");
+const HISTORY_FILE = path.join("/tmp", "history.json");
 
 export interface HistoryEntry {
   id: string;

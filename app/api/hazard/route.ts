@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const HAZARDS_FILE = path.join(process.cwd(), "data", "hazards.json");
+const HAZARDS_FILE = path.join("/tmp", "hazards.json");
 
 interface Hazard {
   id: string;

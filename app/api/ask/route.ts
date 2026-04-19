@@ -5,7 +5,7 @@ import { AskRequest } from "@/lib/types";
 import fs from "fs";
 import path from "path";
 
-const HISTORY_FILE = path.join(process.cwd(), "data", "history.json");
+const HISTORY_FILE = path.join("/tmp", "history.json");
 
 function appendHistory(transcript: string, response: string, mode: string) {
   let history: unknown[] = [];
