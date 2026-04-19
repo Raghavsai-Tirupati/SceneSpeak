@@ -120,8 +120,8 @@ export default function Home() {
     setEyeOpen(true);
     setTimeout(() => {
       setScreen("dismissing");
-      setTimeout(() => setScreen("camera"), 500);
-    }, 1300);
+      setTimeout(() => setScreen("camera"), 400);
+    }, 900);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -321,8 +321,8 @@ export default function Home() {
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center"
           style={{
-            background: "#000",
-            animation: screen === "dismissing" ? "fadeOut 0.5s ease-out forwards" : undefined,
+            background: "#0a0a0f",
+            animation: screen === "dismissing" ? "fadeOut 0.4s ease-out forwards" : undefined,
           }}
           onClick={handleFirstTap}
           onTouchStart={(e) => { e.preventDefault(); handleFirstTap(); }}
@@ -330,66 +330,122 @@ export default function Home() {
           tabIndex={0}
           aria-label="Tap to start Iris"
         >
-          {/* Eye */}
-          <svg
-            width="220"
-            height="136"
-            viewBox="0 0 100 60"
-            fill="none"
-            style={{
-              transform: eyeOpen ? undefined : "scaleY(0.22)",
-              animation: eyeOpen ? "eyeOpen 0.8s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
-            }}
-          >
-            <path
-              d="M5 30 Q25 5, 50 5 Q75 5, 95 30 Q75 55, 50 55 Q25 55, 5 30 Z"
-              stroke="white"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx="50" cy="30" r="14"
-              stroke="white" strokeWidth="1.2"
-              style={{
-                opacity: eyeOpen ? undefined : 0,
-                transform: eyeOpen ? undefined : "scale(0.2)",
-                transformOrigin: "50px 30px",
-                animation: eyeOpen ? "pupilReveal 0.5s ease-out 0.35s both" : undefined,
-              }}
-            />
-            <circle
-              cx="50" cy="30" r="6"
-              fill="white"
-              style={{
-                opacity: eyeOpen ? undefined : 0,
-                transform: eyeOpen ? undefined : "scale(0.2)",
-                transformOrigin: "50px 30px",
-                animation: eyeOpen ? "pupilReveal 0.5s ease-out 0.35s both" : undefined,
-              }}
-            />
-          </svg>
+          {/* Eye with colored iris */}
+          <div style={{
+            transform: eyeOpen ? undefined : "scaleY(0.18)",
+            animation: eyeOpen ? "eyeOpen 0.6s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
+          }}>
+            <svg
+              width="280"
+              height="280"
+              viewBox="0 0 400 400"
+              fill="none"
+            >
+              <defs>
+                <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#2a5a88" />
+                  <stop offset="50%" stopColor="#3a4a8c" />
+                  <stop offset="100%" stopColor="#6b4c9a" />
+                </radialGradient>
+                <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#6b4c9a" stopOpacity="0.5" />
+                  <stop offset="60%" stopColor="#1a3a5c" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#0a0a0f" stopOpacity="0" />
+                </radialGradient>
+                <clipPath id="eyeClip">
+                  <path d="M40 200 Q120 80, 200 80 Q280 80, 360 200 Q280 320, 200 320 Q120 320, 40 200 Z" />
+                </clipPath>
+              </defs>
 
-          {/* "Iris" text — appears after eye opens */}
+              {/* Glow */}
+              <circle
+                cx="200" cy="200" r="180"
+                fill="url(#glowGrad)"
+                style={{
+                  opacity: eyeOpen ? undefined : 0,
+                  animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.15s both" : undefined,
+                }}
+              />
+
+              {/* Eye outline */}
+              <path
+                d="M40 200 Q120 80, 200 80 Q280 80, 360 200 Q280 320, 200 320 Q120 320, 40 200 Z"
+                stroke="white"
+                strokeOpacity="0.8"
+                strokeWidth="1.5"
+              />
+
+              {/* Iris + pupil (clipped to eye shape) */}
+              <g clipPath="url(#eyeClip)">
+                <circle
+                  cx="200" cy="200" r="104"
+                  fill="url(#irisGrad)"
+                  style={{
+                    opacity: eyeOpen ? undefined : 0,
+                    transform: eyeOpen ? undefined : "scale(0.2)",
+                    transformOrigin: "200px 200px",
+                    animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.15s both" : undefined,
+                  }}
+                />
+                <circle
+                  cx="200" cy="200" r="36"
+                  fill="#05050a"
+                  style={{
+                    opacity: eyeOpen ? undefined : 0,
+                    transform: eyeOpen ? undefined : "scale(0.2)",
+                    transformOrigin: "200px 200px",
+                    animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.2s both" : undefined,
+                  }}
+                />
+                {/* Light reflection */}
+                <ellipse
+                  cx="186" cy="186" rx="7" ry="4"
+                  fill="white"
+                  fillOpacity="0.9"
+                  style={{
+                    opacity: eyeOpen ? undefined : 0,
+                    animation: eyeOpen ? "pupilReveal 0.3s ease-out 0.35s both" : undefined,
+                  }}
+                />
+              </g>
+            </svg>
+          </div>
+
+          {/* "IRIS" text — wide letter-spacing like the reference */}
           <h1
-            className="text-white text-[48px] sm:text-[56px] leading-[1] tracking-tight mt-5"
+            className="text-white text-[48px] sm:text-[56px] leading-[1] mt-6"
             style={{
               fontFamily: '"Times New Roman", Times, serif',
+              letterSpacing: "0.3em",
+              fontWeight: 300,
               opacity: eyeOpen ? undefined : 0,
-              animation: eyeOpen ? "irisReveal 0.5s ease-out 0.55s both" : undefined,
+              animation: eyeOpen ? "irisReveal 0.4s ease-out 0.3s both" : undefined,
             }}
           >
-            Iris
+            IRIS
           </h1>
 
-          {/* Bottom */}
-          <div className="absolute bottom-7 flex flex-col items-center gap-3">
+          {/* Subtitle */}
+          <p
+            className="text-[14px] mt-3"
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              letterSpacing: "0.15em",
+              fontWeight: 300,
+              opacity: eyeOpen ? undefined : 0,
+              animation: eyeOpen ? "irisReveal 0.4s ease-out 0.4s both" : undefined,
+            }}
+          >
+            See with sound.
+          </p>
+
+          {/* Bottom hint */}
+          <div className="absolute bottom-8 flex flex-col items-center gap-3">
             {!eyeOpen && (
-              <p className="text-[#333] text-[11px] tracking-[0.1em]">
+              <p className="text-[#444] text-[12px] tracking-[0.1em]">
                 Tap to open
               </p>
             )}
-            <p className="text-[#1a1a1a] text-[9px] tracking-[0.2em] uppercase">
-              Hook &apos;Em Hacks 2026
-            </p>
           </div>
         </div>
       )}
