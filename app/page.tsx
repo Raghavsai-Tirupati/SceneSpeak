@@ -457,12 +457,15 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ── Map card ─────────────────────────────────── */}
+          {/* ── Map card (square) ─────────────────────────── */}
           <div
-            className="relative z-10 px-8 mt-10"
+            className="relative z-10 px-8 mt-8"
             style={{ animation: "fadeInUp 0.5s ease-out 0.1s both" }}
           >
-            <div className="rounded-2xl overflow-hidden border border-[#222] h-[220px] sm:h-[260px]" style={{ boxShadow: "0 0 30px rgba(0,0,0,0.4)" }}>
+            <div
+              className="rounded-2xl overflow-hidden border border-[#222] w-full"
+              style={{ aspectRatio: "1 / 1", maxHeight: "280px", boxShadow: "0 0 30px rgba(0,0,0,0.4)" }}
+            >
               <HazardMap hazards={landingHazards} userLocation={userLocation} compact />
             </div>
             <div className="flex items-center justify-between mt-3 px-1">
@@ -489,60 +492,68 @@ export default function Home() {
 
           {/* ── Mode buttons ─────────────────────────────── */}
           <div
-            className="relative z-10 flex flex-col px-8 mt-10"
+            className="relative z-10 flex flex-col gap-3 px-8 mt-8"
             style={{ animation: "fadeInUp 0.5s ease-out 0.15s both" }}
           >
-            <div className="w-full h-px bg-[#222222]" />
-
             <button
-              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px]"
+              className="mode-card mode-card-scene w-full rounded-2xl border border-[#1a1a1a] bg-[#0d0d0d] p-5 text-left min-h-[44px]"
               onClick={() => handleSelectMode("scene")}
               aria-label="Scene Mode: Tap to ask questions about what the camera sees"
             >
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <p className="text-white text-[22px] sm:text-[26px] font-medium">
-                    <span className="text-[#4FC3F7]">01</span>
-                    <span className="ml-4">Scene Mode</span>
-                  </p>
-                  <p className="text-[#666666] text-[13px] mt-1 ml-[48px]">
-                    Ask about what you see
-                  </p>
+              <div className="flex items-center gap-4">
+                <div
+                  className="mode-icon flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(79,195,247,0.08)", border: "1px solid rgba(79,195,247,0.15)" }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4FC3F7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
                 </div>
-                <span className="text-[#333333] text-[22px] font-light">&rarr;</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-[17px] font-medium">Scene Mode</p>
+                  <p className="text-[#555] text-[13px] mt-0.5">Describe what&apos;s around you</p>
+                </div>
+                <svg className="mode-arrow flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </div>
             </button>
 
-            <div className="w-full h-px bg-[#222222]" />
-
             <button
-              className="w-full py-5 text-left active:opacity-60 transition-opacity min-h-[44px]"
+              className="mode-card mode-card-read w-full rounded-2xl border border-[#1a1a1a] bg-[#0d0d0d] p-5 text-left min-h-[44px]"
               onClick={() => handleSelectMode("read")}
               aria-label="Read Mode: Read any text the camera sees"
             >
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <p className="text-white text-[22px] sm:text-[26px] font-medium">
-                    <span className="text-[#81C784]">02</span>
-                    <span className="ml-4">Read Mode</span>
-                  </p>
-                  <p className="text-[#666666] text-[13px] mt-1 ml-[48px]">
-                    Read signs, menus, documents
-                  </p>
+              <div className="flex items-center gap-4">
+                <div
+                  className="mode-icon flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(129,199,132,0.08)", border: "1px solid rgba(129,199,132,0.15)" }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#81C784" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
                 </div>
-                <span className="text-[#333333] text-[22px] font-light">&rarr;</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-[17px] font-medium">Read Mode</p>
+                  <p className="text-[#555] text-[13px] mt-0.5">Signs, menus &amp; documents</p>
+                </div>
+                <svg className="mode-arrow flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </div>
             </button>
 
-            <div className="w-full h-px bg-[#222222]" />
-
             {voiceListening && (
-              <div className="flex items-center gap-2 mt-4">
+              <div className="flex items-center justify-center gap-2 mt-2">
                 <span
                   className="w-2 h-2 rounded-full bg-[#EF5350]"
                   style={{ animation: "breathe 2s ease-in-out infinite" }}
                 />
-                <span className="text-[#666666] text-[13px]">
+                <span className="text-[#555] text-[13px]">
                   Listening — say a mode, or tap to choose
                 </span>
               </div>
