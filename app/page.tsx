@@ -234,7 +234,7 @@ export default function Home() {
   const speakFallback = useCallback((text: string | null) => {
     if (text) {
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.0;
+      u.rate = 1.5;
       u.onend = () => setAppState("idle");
       u.onerror = () => setAppState("idle");
       window.speechSynthesis.speak(u);
@@ -335,7 +335,7 @@ export default function Home() {
           if (audio) {
             const url = URL.createObjectURL(blob);
             audio.src = url;
-            audio.playbackRate = 1.0;
+            audio.playbackRate = 1.5;
             audio.onended = () => {
               URL.revokeObjectURL(url);
               setAppState("idle");
