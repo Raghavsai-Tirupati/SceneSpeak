@@ -1,20 +1,9 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
 import CameraFeed, { CameraFeedHandle } from "@/components/CameraFeed";
 import StatusIndicator from "@/components/StatusIndicator";
 import { AppState, AppMode, Message } from "@/lib/types";
-
-const HazardMap = dynamic(() => import("./dashboard/HazardMap"), { ssr: false });
-
-interface Hazard {
-  id: string;
-  latitude: number;
-  longitude: number;
-  description: string;
-  timestamp: number;
-}
 
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
@@ -66,26 +55,9 @@ export default function Home() {
   const [responseText, setResponseText] = useState<string | null>(null);
   const [voiceListening, setVoiceListening] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
-  const [landingHazards, setLandingHazards] = useState<Hazard[]>([]);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
   useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
-
-  useEffect(() => {
-    fetch("/api/hazard")
-      .then((r) => r.json())
-      .then(setLandingHazards)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, []);
 
   // ── Speech recognition setup ──────────────────────────
   useEffect(() => {
@@ -420,7 +392,7 @@ export default function Home() {
 
   return (
     <main className="fixed inset-0 bg-[#0a0a0a]">
-      {/* ── Landing screen — triptych layout ──────────── */}
+      {/* ── Landing screen — two-panel split ─────────── */}
       {(screen === "landing" || screen === "dismissing") && (
         <div
           className="fixed inset-0 z-50 flex"
@@ -449,9 +421,9 @@ export default function Home() {
             style={{ animation: "panelSlideLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both" }}
           >
             <span
-              className="absolute left-2.5 top-1/2 text-[9px] tracking-[0.3em] uppercase"
+              className="absolute left-3 top-1/2 text-[9px] tracking-[0.3em] uppercase"
               style={{
-                color: "rgba(79,195,247,0.2)",
+                color: "rgba(79,195,247,0.15)",
                 transform: "translateY(-50%) rotate(-90deg)",
                 transformOrigin: "center",
                 whiteSpace: "nowrap",
@@ -470,62 +442,14 @@ export default function Home() {
               </svg>
             </div>
 
-            <p className="text-white text-[14px] font-medium mt-5 tracking-wide">Scene</p>
-            <p className="text-[#555] text-[10px] mt-1.5 text-center px-3 leading-relaxed">
+            <p className="text-white text-[15px] font-medium mt-5 tracking-wide">Scene</p>
+            <p className="text-[#444] text-[10px] mt-1.5 text-center px-4 leading-relaxed">
               Describe your surroundings
             </p>
           </button>
 
           {/* ── Separator ─────────────────────────────────── */}
-          <div className="w-px" style={{ background: "rgba(255,255,255,0.05)" }} />
-
-          {/* ── Center panel — Branding ───────────────────── */}
-          <div
-            className="flex-[1.4] flex flex-col items-center relative"
-            style={{
-              background: "#050505",
-              animation: "fadeInUp 0.6s cubic-bezier(0.22,1,0.36,1) both",
-            }}
-          >
-            <div className="flex flex-col items-center pt-20 sm:pt-24">
-              <h1
-                className="text-white text-[44px] sm:text-[52px] leading-[1] tracking-tight"
-                style={{ fontFamily: '"Times New Roman", Times, serif' }}
-              >
-                Iris
-              </h1>
-              <p className="text-[#555] text-[11px] tracking-[0.15em] uppercase mt-3">
-                Visual Assistant
-              </p>
-            </div>
-
-            <div className="flex-1 flex items-center justify-center w-full px-4">
-              <div
-                className="rounded-xl overflow-hidden border border-[#1a1a1a] w-full"
-                style={{ aspectRatio: "1 / 1", maxWidth: "180px", boxShadow: "0 0 24px rgba(0,0,0,0.4)" }}
-              >
-                <HazardMap hazards={landingHazards} userLocation={userLocation} compact />
-              </div>
-            </div>
-
-            <div className="pb-8 flex flex-col items-center gap-3">
-              {voiceListening && (
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full bg-[#EF5350]"
-                    style={{ animation: "breathe 2s ease-in-out infinite" }}
-                  />
-                  <span className="text-[#555] text-[10px]">Say a mode or tap</span>
-                </div>
-              )}
-              <p className="text-[#2a2a2a] text-[9px] tracking-[0.2em] uppercase">
-                Hook &apos;Em Hacks 2026
-              </p>
-            </div>
-          </div>
-
-          {/* ── Separator ─────────────────────────────────── */}
-          <div className="w-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <div className="w-px" style={{ background: "rgba(255,255,255,0.06)" }} />
 
           {/* ── Right panel — Read Mode ───────────────────── */}
           <button
@@ -535,9 +459,9 @@ export default function Home() {
             style={{ animation: "panelSlideRight 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
           >
             <span
-              className="absolute right-2.5 top-1/2 text-[9px] tracking-[0.3em] uppercase"
+              className="absolute right-3 top-1/2 text-[9px] tracking-[0.3em] uppercase"
               style={{
-                color: "rgba(129,199,132,0.2)",
+                color: "rgba(129,199,132,0.15)",
                 transform: "translateY(-50%) rotate(90deg)",
                 transformOrigin: "center",
                 whiteSpace: "nowrap",
@@ -558,11 +482,41 @@ export default function Home() {
               </svg>
             </div>
 
-            <p className="text-white text-[14px] font-medium mt-5 tracking-wide">Read</p>
-            <p className="text-[#555] text-[10px] mt-1.5 text-center px-3 leading-relaxed">
+            <p className="text-white text-[15px] font-medium mt-5 tracking-wide">Read</p>
+            <p className="text-[#444] text-[10px] mt-1.5 text-center px-4 leading-relaxed">
               Signs, menus &amp; documents
             </p>
           </button>
+
+          {/* ── Overlaid center branding ──────────────────── */}
+          <div className="absolute inset-0 flex flex-col items-center justify-end pointer-events-none z-10">
+            <div
+              className="flex flex-col items-center mb-6"
+              style={{ animation: "fadeInUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both" }}
+            >
+              <h1
+                className="text-white text-[40px] sm:text-[48px] leading-[1] tracking-tight"
+                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+              >
+                Iris
+              </h1>
+              <p className="text-[#555] text-[11px] tracking-[0.2em] uppercase mt-2.5">
+                Visual Assistant
+              </p>
+              {voiceListening && (
+                <div className="flex items-center gap-2 mt-4">
+                  <span
+                    className="w-2 h-2 rounded-full bg-[#EF5350]"
+                    style={{ animation: "breathe 2s ease-in-out infinite" }}
+                  />
+                  <span className="text-[#555] text-[10px]">Say a mode or tap</span>
+                </div>
+              )}
+              <p className="text-[#222] text-[9px] tracking-[0.2em] uppercase mt-4">
+                Hook &apos;Em Hacks 2026
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
