@@ -60,22 +60,43 @@ body {
   }
 }
 
-/* ── Eye animation ────────────────────────────────────── */
+/* ── Iris landing animation ───────────────────────────── */
 
-@keyframes eyeOpen {
-  0% { transform: scaleY(0.18); }
-  65% { transform: scaleY(1.06); }
-  100% { transform: scaleY(1); }
+@keyframes vignetteIn {
+  to { opacity: 1; }
 }
 
-@keyframes pupilReveal {
-  0% { opacity: 0; transform: scale(0.2); }
-  100% { opacity: 1; transform: scale(1); }
+@keyframes ringDraw {
+  to { stroke-dashoffset: 0; }
 }
 
-@keyframes irisReveal {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes irisOpen {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pupilIn {
+  to { transform: scale(1); }
+}
+
+@keyframes bloomIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.9; transform: scale(1); }
+}
+
+@keyframes bloomBreathe {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes textUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 
 /* ── Utility ───────────────────────────────────────────── */

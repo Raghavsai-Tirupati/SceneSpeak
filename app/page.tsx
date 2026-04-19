@@ -49,8 +49,6 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [isListening, setIsListening] = useState(false);
   const [responseText, setResponseText] = useState<string | null>(null);
-  const [eyeOpen, setEyeOpen] = useState(false);
-
   useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
@@ -114,14 +112,13 @@ export default function Home() {
     u.rate = 1.0;
     window.speechSynthesis.speak(u);
 
-    // 3. Default to scene mode, open eye, transition to camera
+    // 3. Default to scene mode, transition to camera after 0.5s hold
     setMode("scene");
     modeRef.current = "scene";
-    setEyeOpen(true);
     setTimeout(() => {
       setScreen("dismissing");
       setTimeout(() => setScreen("camera"), 400);
-    }, 900);
+    }, 500);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -316,12 +313,13 @@ export default function Home() {
 
   return (
     <main className="fixed inset-0 bg-[#0a0a0a]">
-      {/* ── Landing screen — tap the eye to start ────── */}
+      {/* ── Landing screen — animated iris from reference ── */}
       {(screen === "landing" || screen === "dismissing") && (
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center"
           style={{
             background: "#0a0a0f",
+            padding: 40,
             animation: screen === "dismissing" ? "fadeOut 0.4s ease-out forwards" : undefined,
           }}
           onClick={handleFirstTap}
@@ -330,122 +328,121 @@ export default function Home() {
           tabIndex={0}
           aria-label="Tap to start Iris"
         >
-          {/* Eye with colored iris */}
-          <div style={{
-            transform: eyeOpen ? undefined : "scaleY(0.18)",
-            animation: eyeOpen ? "eyeOpen 0.6s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
-          }}>
-            <svg
-              width="280"
-              height="280"
-              viewBox="0 0 400 400"
-              fill="none"
-            >
-              <defs>
-                <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#2a5a88" />
-                  <stop offset="50%" stopColor="#3a4a8c" />
-                  <stop offset="100%" stopColor="#6b4c9a" />
-                </radialGradient>
-                <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#6b4c9a" stopOpacity="0.5" />
-                  <stop offset="60%" stopColor="#1a3a5c" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#0a0a0f" stopOpacity="0" />
-                </radialGradient>
-                <clipPath id="eyeClip">
-                  <path d="M40 200 Q120 80, 200 80 Q280 80, 360 200 Q280 320, 200 320 Q120 320, 40 200 Z" />
-                </clipPath>
-              </defs>
+          {/* Ambient vignette */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 60% 50% at 50% 48%, rgba(107,76,154,0.08) 0%, rgba(26,58,92,0.04) 35%, transparent 70%)",
+            opacity: 0,
+            animation: "vignetteIn 2.4s ease-out 0.4s forwards",
+          }} />
 
-              {/* Glow */}
-              <circle
-                cx="200" cy="200" r="180"
-                fill="url(#glowGrad)"
-                style={{
-                  opacity: eyeOpen ? undefined : 0,
-                  animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.15s both" : undefined,
-                }}
-              />
+          {/* Star specks */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: [
+              "radial-gradient(1px 1px at 23% 31%, rgba(255,255,255,0.25), transparent 60%)",
+              "radial-gradient(1px 1px at 71% 22%, rgba(255,255,255,0.18), transparent 60%)",
+              "radial-gradient(1px 1px at 12% 74%, rgba(255,255,255,0.15), transparent 60%)",
+              "radial-gradient(1px 1px at 88% 66%, rgba(255,255,255,0.2), transparent 60%)",
+              "radial-gradient(1px 1px at 55% 12%, rgba(255,255,255,0.12), transparent 60%)",
+              "radial-gradient(1px 1px at 42% 88%, rgba(255,255,255,0.14), transparent 60%)",
+            ].join(","),
+            opacity: 0,
+            animation: "vignetteIn 3s ease-out 0.8s forwards",
+          }} />
 
-              {/* Eye outline */}
-              <path
-                d="M40 200 Q120 80, 200 80 Q280 80, 360 200 Q280 320, 200 320 Q120 320, 40 200 Z"
-                stroke="white"
-                strokeOpacity="0.8"
-                strokeWidth="1.5"
-              />
+          {/* Content */}
+          <div className="relative z-[2] flex flex-col items-center">
+            {/* Eye mark */}
+            <div className="relative" style={{ width: 200, height: 200, display: "grid", placeItems: "center" }}>
+              {/* Bloom glow */}
+              <div className="absolute rounded-full" style={{
+                inset: -80,
+                background: "radial-gradient(circle at 50% 50%, rgba(107,76,154,0.45) 0%, rgba(64,66,128,0.22) 28%, rgba(26,58,92,0.12) 50%, transparent 72%)",
+                filter: "blur(6px)",
+                opacity: 0,
+                transform: "scale(0.7)",
+                animation: "bloomIn 1.8s cubic-bezier(.22,.61,.36,1) 1.8s forwards, bloomBreathe 6s ease-in-out 4s infinite",
+              }} />
 
-              {/* Iris + pupil (clipped to eye shape) */}
-              <g clipPath="url(#eyeClip)">
-                <circle
-                  cx="200" cy="200" r="104"
-                  fill="url(#irisGrad)"
-                  style={{
-                    opacity: eyeOpen ? undefined : 0,
-                    transform: eyeOpen ? undefined : "scale(0.2)",
-                    transformOrigin: "200px 200px",
-                    animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.15s both" : undefined,
-                  }}
-                />
-                <circle
-                  cx="200" cy="200" r="36"
-                  fill="#05050a"
-                  style={{
-                    opacity: eyeOpen ? undefined : 0,
-                    transform: eyeOpen ? undefined : "scale(0.2)",
-                    transformOrigin: "200px 200px",
-                    animation: eyeOpen ? "pupilReveal 0.4s ease-out 0.2s both" : undefined,
-                  }}
-                />
-                {/* Light reflection */}
-                <ellipse
-                  cx="186" cy="186" rx="7" ry="4"
-                  fill="white"
-                  fillOpacity="0.9"
-                  style={{
-                    opacity: eyeOpen ? undefined : 0,
-                    animation: eyeOpen ? "pupilReveal 0.3s ease-out 0.35s both" : undefined,
-                  }}
-                />
-              </g>
-            </svg>
+              <svg viewBox="0 0 200 200" style={{ position: "relative", width: "100%", height: "100%", overflow: "visible" }}>
+                <defs>
+                  <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#2a5a88" />
+                    <stop offset="45%" stopColor="#3a4a8c" />
+                    <stop offset="80%" stopColor="#6b4c9a" />
+                    <stop offset="100%" stopColor="#3a2a5c" />
+                  </radialGradient>
+                  <radialGradient id="pupilGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#05050a" />
+                    <stop offset="70%" stopColor="#0a0a14" />
+                    <stop offset="100%" stopColor="#1a1a2a" />
+                  </radialGradient>
+                  <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#7a5cb0" />
+                    <stop offset="50%" stopColor="#ffffff" />
+                    <stop offset="100%" stopColor="#2a5a88" />
+                  </linearGradient>
+                  <clipPath id="eyeClip">
+                    <path d="M 20 100 Q 100 40, 180 100 Q 100 160, 20 100 Z" />
+                  </clipPath>
+                </defs>
+
+                {/* Ring that draws in */}
+                <circle cx="100" cy="100" r="70" fill="none" stroke="url(#ringGrad)" strokeWidth="1.2"
+                  style={{ strokeDasharray: 440, strokeDashoffset: 440, animation: "ringDraw 1.6s cubic-bezier(.65,.05,.36,1) 0.2s forwards" }} />
+
+                {/* Iris clipped to almond */}
+                <g clipPath="url(#eyeClip)">
+                  <g style={{ transformOrigin: "100px 100px", transform: "scale(0)", opacity: 0, animation: "irisOpen 1.4s cubic-bezier(.22,.61,.36,1) 1.7s forwards" }}>
+                    <circle cx="100" cy="100" r="52" fill="url(#irisGrad)" />
+                    {/* Striations */}
+                    <g style={{ opacity: 0, animation: "fadeIn 1.2s ease-out 2.2s forwards" }}>
+                      {[[100,52,100,64],[124,58,119,69],[142,75,134,83],[148,100,136,100],[142,125,134,117],[124,142,119,131],[100,148,100,136],[76,142,81,131],[58,125,66,117],[52,100,64,100],[58,75,66,83],[76,58,81,69],[112,54,110,66],[134,66,128,75],[146,88,135,93],[146,112,135,107],[134,134,128,125],[112,146,110,134],[88,146,90,134],[66,134,72,125],[54,112,65,107],[54,88,65,93],[66,66,72,75],[88,54,90,66]].map(([x1,y1,x2,y2], i) => (
+                        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.14)" strokeWidth="0.5" strokeLinecap="round" />
+                      ))}
+                    </g>
+                    <circle cx="100" cy="100" r="52" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
+                    <circle cx="100" cy="100" r="32" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+                    {/* Pupil */}
+                    <g style={{ transformOrigin: "100px 100px", transform: "scale(0)", animation: "pupilIn 0.6s cubic-bezier(.34,1.56,.64,1) 2.5s forwards" }}>
+                      <circle cx="100" cy="100" r="18" fill="url(#pupilGrad)" />
+                      <g style={{ opacity: 0, animation: "fadeIn 0.7s ease-out 2.8s forwards" }}>
+                        <ellipse cx="93" cy="93" rx="3.5" ry="2" fill="rgba(255,255,255,0.9)" />
+                        <circle cx="106" cy="106" r="1" fill="rgba(255,255,255,0.35)" />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+
+                {/* Eyelid outlines */}
+                <path d="M 20 100 Q 100 40, 180 100" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round"
+                  style={{ opacity: 0, animation: "fadeIn 0.8s ease-out 1.5s forwards" }} />
+                <path d="M 20 100 Q 100 160, 180 100" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round"
+                  style={{ opacity: 0, animation: "fadeIn 0.8s ease-out 1.5s forwards" }} />
+              </svg>
+            </div>
+
+            {/* Wordmark */}
+            <div style={{
+              marginTop: 56, fontSize: 48, fontWeight: 300, letterSpacing: "0.32em", paddingLeft: "0.32em",
+              color: "#fff", opacity: 0, transform: "translateY(8px)",
+              animation: "textUp 1.2s cubic-bezier(.22,.61,.36,1) 2.7s forwards",
+            }}>IRIS</div>
+
+            {/* Tagline */}
+            <div style={{
+              marginTop: 20, fontSize: 16, fontWeight: 300, letterSpacing: "0.18em",
+              color: "rgba(255,255,255,0.5)", opacity: 0, transform: "translateY(8px)",
+              animation: "textUp 1.2s cubic-bezier(.22,.61,.36,1) 3.0s forwards",
+            }}>See with sound.</div>
           </div>
 
-          {/* "IRIS" text — wide letter-spacing like the reference */}
-          <h1
-            className="text-white text-[48px] sm:text-[56px] leading-[1] mt-6"
-            style={{
-              fontFamily: '"Times New Roman", Times, serif',
-              letterSpacing: "0.3em",
-              fontWeight: 300,
-              opacity: eyeOpen ? undefined : 0,
-              animation: eyeOpen ? "irisReveal 0.4s ease-out 0.3s both" : undefined,
-            }}
-          >
-            IRIS
-          </h1>
-
-          {/* Subtitle */}
-          <p
-            className="text-[14px] mt-3"
-            style={{
-              color: "rgba(255,255,255,0.5)",
-              letterSpacing: "0.15em",
-              fontWeight: 300,
-              opacity: eyeOpen ? undefined : 0,
-              animation: eyeOpen ? "irisReveal 0.4s ease-out 0.4s both" : undefined,
-            }}
-          >
-            See with sound.
-          </p>
-
-          {/* Bottom hint */}
-          <div className="absolute bottom-8 flex flex-col items-center gap-3">
-            {!eyeOpen && (
-              <p className="text-[#444] text-[12px] tracking-[0.1em]">
-                Tap to open
-              </p>
-            )}
+          {/* Footer */}
+          <div className="absolute bottom-8 left-0 right-0 text-center" style={{
+            fontSize: 12, fontWeight: 400, letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "rgba(255,255,255,0.3)", opacity: 0,
+            animation: "fadeIn 1.6s ease-out 3.4s forwards",
+          }}>
+            Hook &apos;Em Hacks 2026 <span style={{ display: "inline-block", margin: "0 0.7em", opacity: 0.6 }}>&bull;</span> UT Austin
           </div>
         </div>
       )}
