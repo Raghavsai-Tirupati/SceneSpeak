@@ -63,7 +63,7 @@ body {
 /* ── Eye animation ────────────────────────────────────── */
 
 @keyframes eyeOpen {
-  0% { transform: scaleY(0.15); }
+  0% { transform: scaleY(0.22); }
   65% { transform: scaleY(1.08); }
   100% { transform: scaleY(1); }
 }

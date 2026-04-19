@@ -475,12 +475,12 @@ export default function Home() {
             <div className="flex-1 flex flex-col items-center justify-center">
               {/* Eye */}
               <svg
-                width="130"
-                height="80"
+                width="220"
+                height="136"
                 viewBox="0 0 100 60"
                 fill="none"
                 style={{
-                  transform: eyeOpen ? undefined : "scaleY(0.15)",
+                  transform: eyeOpen ? undefined : "scaleY(0.22)",
                   animation: eyeOpen ? "eyeOpen 0.8s cubic-bezier(0.22,1,0.36,1) forwards" : undefined,
                 }}
               >
