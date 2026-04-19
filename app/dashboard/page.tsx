@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 
 interface Hazard {
@@ -16,15 +16,28 @@ const HazardMap = dynamic(() => import("./HazardMap"), { ssr: false });
 export default function DashboardPage() {
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevCountRef = useRef(0);
+  const [flash, setFlash] = useState(false);
 
   useEffect(() => {
-    fetch("/api/hazard")
-      .then((r) => r.json())
-      .then((data) => {
-        setHazards(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const fetchHazards = () => {
+      fetch("/api/hazard")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.length > prevCountRef.current && prevCountRef.current > 0) {
+            setFlash(true);
+            setTimeout(() => setFlash(false), 1500);
+          }
+          prevCountRef.current = data.length;
+          setHazards(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    };
+
+    fetchHazards();
+    const interval = setInterval(fetchHazards, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -39,13 +52,27 @@ export default function DashboardPage() {
               For city planners &amp; university accessibility offices
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-[#4FC3F7] text-[24px] font-semibold">
-              {hazards.length}
-            </p>
-            <p className="text-[#808080] text-[12px] uppercase tracking-wider">
-              Reports
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] rounded-full px-3 py-1.5">
+              <span
+                className="w-2 h-2 rounded-full bg-[#EF5350]"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              />
+              <span className="text-[#EF5350] text-[12px] font-semibold tracking-wider uppercase">
+                Live
+              </span>
+            </div>
+            <div className="text-right">
+              <p
+                className="text-[#4FC3F7] text-[24px] font-semibold transition-colors duration-300"
+                style={flash ? { color: "#EF5350" } : undefined}
+              >
+                {hazards.length}
+              </p>
+              <p className="text-[#808080] text-[12px] uppercase tracking-wider">
+                Reports
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -58,8 +85,8 @@ export default function DashboardPage() {
         ) : hazards.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
             <p className="text-[#808080] text-[15px]">No hazards reported yet.</p>
-            <p className="text-[#555] text-[13px]">
-              Hazards are automatically detected when users scan their environment with SceneSpeak.
+            <p className="text-[#555] text-[13px] text-center max-w-md">
+              Hazards are automatically detected when users scan their environment with SceneSpeak. Walk around and ask questions to start generating reports.
             </p>
           </div>
         ) : (
@@ -106,6 +133,13 @@ export default function DashboardPage() {
           <span>Data collected anonymously via AI-assisted hazard detection</span>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
     </div>
   );
 }

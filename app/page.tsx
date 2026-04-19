@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraFeed, { CameraFeedHandle } from "@/components/CameraFeed";
 import StatusIndicator from "@/components/StatusIndicator";
-import { AppState, AppMode, Message, SessionEntry } from "@/lib/types";
+import { AppState, AppMode, Message } from "@/lib/types";
 
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
@@ -131,7 +131,7 @@ function IntroScreen({
               style={{ animation: "breathe 2s ease-in-out infinite" }}
             />
             <span className="text-[#666666] text-[13px]">
-              Listening — say &quot;scene mode&quot; or &quot;read mode&quot;
+              Listening — say a mode, or tap to choose
             </span>
           </div>
         )}
@@ -245,7 +245,6 @@ export default function Home() {
   const transcriptRef = useRef("");
   const isListeningRef = useRef(false);
   const historyRef = useRef<Message[]>([]);
-  const sessionIdRef = useRef(0);
   const modeRef = useRef<AppMode>("scene");
   const modeSelectedRef = useRef(false);
   const modeListenRef = useRef<SpeechRecognition | null>(null);
@@ -255,7 +254,6 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [isListening, setIsListening] = useState(false);
   const [responseText, setResponseText] = useState<string | null>(null);
-  const [sessionHistory, setSessionHistory] = useState<SessionEntry[]>([]);
   const [voiceListening, setVoiceListening] = useState(false);
 
   useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
@@ -380,39 +378,6 @@ export default function Home() {
     }
   }, []);
 
-  // ── Replay entry ──────────────────────────────────────
-  const replayEntry = useCallback(
-    (entry: SessionEntry) => {
-      if (appState === "thinking" || appState === "speaking") return;
-      window.speechSynthesis.cancel();
-      setResponseText(entry.answer);
-      setAppState("speaking");
-      const u = new SpeechSynthesisUtterance(entry.answer);
-      u.rate = 1.8;
-      u.onend = () => setAppState("idle");
-      u.onerror = () => setAppState("idle");
-      window.speechSynthesis.speak(u);
-    },
-    [appState]
-  );
-
-  // ── Add session entry ─────────────────────────────────
-  const addSessionEntry = useCallback(
-    (thumbnail: string, question: string, answer: string) => {
-      setSessionHistory((prev) => [
-        ...prev,
-        {
-          id: ++sessionIdRef.current,
-          thumbnail,
-          question,
-          answer,
-          timestamp: Date.now(),
-        },
-      ]);
-    },
-    []
-  );
-
   // ── Silent hazard reporting ────────────────────────────
   const reportHazardIfNeeded = useCallback((text: string, currentMode: AppMode) => {
     if (currentMode !== "scene") return;
@@ -497,7 +462,6 @@ export default function Home() {
           ];
           setResponseText(text || null);
           setAppState("speaking");
-          addSessionEntry(imageBase64, transcript, text);
           reportHazardIfNeeded(text, currentMode);
 
           const audio = audioRef.current;
@@ -526,7 +490,6 @@ export default function Home() {
           ];
           setResponseText(data.text);
           setAppState("speaking");
-          addSessionEntry(imageBase64, transcript, data.text);
           reportHazardIfNeeded(data.text, currentMode);
           speakFallback(data.text);
         }
@@ -538,7 +501,7 @@ export default function Home() {
         speakFallback(msg);
       }
     },
-    [speakFallback, addSessionEntry, reportHazardIfNeeded]
+    [speakFallback, reportHazardIfNeeded]
   );
 
   // ── Screen tap handler ────────────────────────────────
@@ -591,7 +554,7 @@ export default function Home() {
     // Speak welcome message directly from user gesture (required for mobile)
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(
-      "Welcome to SceneSpeak. Say scene mode or read mode to begin. You can also tap the screen."
+      "Welcome to SceneSpeak. Choose a mode to begin."
     );
     u.rate = 1.8;
     u.onend = () => {
@@ -663,8 +626,6 @@ export default function Home() {
           mode={mode}
           isListening={isListening}
           responseText={responseText}
-          sessionHistory={sessionHistory}
-          onReplayEntry={replayEntry}
           onSwitchMode={switchMode}
         />
       )}

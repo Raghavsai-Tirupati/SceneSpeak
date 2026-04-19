@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -22,11 +23,24 @@ interface Hazard {
   timestamp: number;
 }
 
+function RecenterOnNewHazard({ hazards }: { hazards: Hazard[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (hazards.length > 0) {
+      const latest = hazards[hazards.length - 1];
+      map.flyTo([latest.latitude, latest.longitude], map.getZoom(), {
+        duration: 1,
+      });
+    }
+  }, [hazards, map]);
+  return null;
+}
+
 export default function HazardMap({ hazards }: { hazards: Hazard[] }) {
   const center: [number, number] =
     hazards.length > 0
       ? [hazards[hazards.length - 1].latitude, hazards[hazards.length - 1].longitude]
-      : [30.2849, -97.7341]; // UT Austin default
+      : [30.2849, -97.7341];
 
   return (
     <MapContainer
@@ -39,6 +53,7 @@ export default function HazardMap({ hazards }: { hazards: Hazard[] }) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <RecenterOnNewHazard hazards={hazards} />
       {hazards.map((h) => (
         <Marker key={h.id} position={[h.latitude, h.longitude]} icon={hazardIcon}>
           <Popup>
