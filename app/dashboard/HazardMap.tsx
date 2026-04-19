@@ -121,7 +121,7 @@ export default function HazardMap({ hazards, userLocation, compact }: {
         .leaflet-popup-content {
           color: #e0e0e0 !important;
           margin: 14px 16px !important;
-          font-family: var(--font-sans), system-ui, sans-serif !important;
+          font-family: "Times New Roman", Times, serif !important;
         }
         .leaflet-popup-tip {
           background: #1a1a1a !important;

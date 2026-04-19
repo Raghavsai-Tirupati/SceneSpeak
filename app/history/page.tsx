@@ -28,8 +28,8 @@ export default function HistoryPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <header className="border-b border-[#1a1a1a] px-6 py-5 bg-[#0d0d0d]">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-[family-name:var(--font-serif)] text-[26px] sm:text-[32px] tracking-tight">
-            SceneSpeak
+          <h1 className="text-[26px] sm:text-[32px] tracking-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+            Iris
             <span className="text-[#555] font-normal ml-2">/ Activity Log</span>
           </h1>
           <p className="text-[#666] text-[13px] mt-1">
@@ -61,7 +61,7 @@ export default function HistoryPage() {
             </div>
             <p className="text-[#808080] text-[16px]">No activity yet</p>
             <p className="text-[#555] text-[13px] text-center max-w-sm leading-relaxed">
-              Interactions will appear here as the user asks questions with SceneSpeak.
+              Interactions will appear here as the user asks questions with Iris.
             </p>
           </div>
         ) : (
@@ -106,7 +106,7 @@ export default function HistoryPage() {
                   <div className="w-full h-px bg-[#1a1a1a]" />
                   <div>
                     <p className="text-[#888] text-[11px] uppercase tracking-wider mb-1">
-                      SceneSpeak said
+                      Iris said
                     </p>
                     <p className="text-[#E0E0E0] text-[14px] leading-relaxed">
                       {entry.response}
@@ -121,7 +121,7 @@ export default function HistoryPage() {
 
       <footer className="border-t border-[#1a1a1a] px-6 py-4 mt-8">
         <div className="max-w-3xl mx-auto text-[12px] text-[#444]">
-          SceneSpeak &bull; Hook &apos;Em Hacks 2026
+          Iris &bull; Hook &apos;Em Hacks 2026
         </div>
       </footer>
 

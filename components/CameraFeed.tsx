@@ -35,7 +35,7 @@ const CameraFeed = forwardRef<CameraFeedHandle>(function CameraFeed(_, ref) {
       } catch (err) {
         console.error("Camera error:", err);
         setError(
-          "Camera access denied. Please allow camera access to use SceneSpeak."
+          "Camera access denied. Please allow camera access to use Iris."
         );
       }
     }

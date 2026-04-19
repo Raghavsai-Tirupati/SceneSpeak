@@ -30,8 +30,8 @@ export default function StatusIndicator({
       <div className="bg-black px-5 pt-12 pb-3 flex items-center justify-between">
         {/* Left — branding */}
         <div className="flex items-center gap-3">
-          <span className="font-[family-name:var(--font-serif)] text-white text-[18px] tracking-tight">
-            SceneSpeak
+          <span className="text-white text-[18px] tracking-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+            Iris
           </span>
           <span className="text-[#444] text-[12px]">/</span>
           <span style={{ color: modeAccent }} className="text-[12px] font-semibold uppercase tracking-wider">

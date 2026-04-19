@@ -45,8 +45,8 @@ export default function DashboardPage() {
       <header className="border-b border-[#1a1a1a] px-6 py-5 bg-[#0d0d0d]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="font-[family-name:var(--font-serif)] text-[26px] sm:text-[32px] tracking-tight">
-              SceneSpeak
+            <h1 className="text-[26px] sm:text-[32px] tracking-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+              Iris
               <span className="text-[#555] font-normal ml-2">/ Hazard Dashboard</span>
             </h1>
             <p className="text-[#666] text-[13px] mt-1">
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-[#808080] text-[16px]">No hazards reported yet</p>
             <p className="text-[#555] text-[13px] text-center max-w-sm leading-relaxed">
-              Hazards are automatically detected when users scan their environment with SceneSpeak. Start exploring to generate reports.
+              Hazards are automatically detected when users scan their environment with Iris. Start exploring to generate reports.
             </p>
           </div>
         ) : (

@@ -150,7 +150,7 @@ export default function Home() {
     // 3. Speak welcome — must be in the SAME touchstart handler for iOS Safari
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(
-      "Welcome to SceneSpeak. Tap anywhere to describe your surroundings, or hold and speak to ask a question. Say scene mode or read mode to begin."
+      "Welcome to Iris. Tap anywhere to describe your surroundings, or hold and speak to ask a question. Say scene mode or read mode to begin."
     );
     u.rate = 1.0;
     window.speechSynthesis.speak(u);
@@ -437,17 +437,17 @@ export default function Home() {
               onTouchStart={(e) => { e.preventDefault(); handleFirstTap(); }}
               role="button"
               tabIndex={0}
-              aria-label="Tap anywhere to start SceneSpeak"
+              aria-label="Tap anywhere to start Iris"
             />
           )}
 
           {/* ── Branding ────────────────────────────────────── */}
           <div className="relative z-10 flex flex-col px-8 pt-16 sm:pt-20">
             <h1
-              className="font-[family-name:var(--font-serif)] text-white text-[38px] sm:text-[48px] leading-[1.1] tracking-tight"
-              style={{ animation: "fadeInUp 0.5s ease-out" }}
+              className="text-white text-[38px] sm:text-[48px] leading-[1.1] tracking-tight"
+              style={{ animation: "fadeInUp 0.5s ease-out", fontFamily: '"Times New Roman", Times, serif' }}
             >
-              SceneSpeak
+              Iris
             </h1>
             <p
               className="text-[#999] text-[14px] tracking-wide mt-2"
