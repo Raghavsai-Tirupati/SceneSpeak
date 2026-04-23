@@ -7,7 +7,7 @@ import path from "path";
 
 const HISTORY_FILE = path.join("/tmp", "history.json");
 
-function appendHistory(transcript: string, response: string, mode: string) {
+function appendHistory(transcript: string, response: string) {
   let history: unknown[] = [];
   try {
     history = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf-8"));
@@ -17,7 +17,6 @@ function appendHistory(transcript: string, response: string, mode: string) {
     timestamp: Date.now(),
     transcript,
     response,
-    mode,
   });
   fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
 }
@@ -25,7 +24,7 @@ function appendHistory(transcript: string, response: string, mode: string) {
 export async function POST(request: NextRequest) {
   try {
     const body: AskRequest = await request.json();
-    const { image, transcript, history, mode } = body;
+    const { image, transcript, history } = body;
 
     if (!image || !transcript) {
       return NextResponse.json(
@@ -34,9 +33,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const responseText = await askGemini(image, transcript, history || [], mode || "scene");
+    const responseText = await askGemini(image, transcript, history || []);
 
-    appendHistory(transcript, responseText, mode || "scene");
+    appendHistory(transcript, responseText);
 
     try {
       const audioBuffer = await synthesizeSpeech(responseText);

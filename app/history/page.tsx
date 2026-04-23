@@ -7,7 +7,6 @@ interface HistoryEntry {
   timestamp: number;
   transcript: string;
   response: string;
-  mode: string;
 }
 
 export default function HistoryPage() {
@@ -75,15 +74,6 @@ export default function HistoryPage() {
                 className="rounded-xl bg-[#111] border border-[#1a1a1a] p-5"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span
-                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider"
-                    style={{
-                      background: entry.mode === "scene" ? "rgba(79,195,247,0.12)" : "rgba(129,199,132,0.12)",
-                      color: entry.mode === "scene" ? "#4FC3F7" : "#81C784",
-                    }}
-                  >
-                    {entry.mode}
-                  </span>
                   <span className="text-[#555] text-[12px]">
                     {new Date(entry.timestamp).toLocaleString([], {
                       month: "short",
@@ -97,7 +87,7 @@ export default function HistoryPage() {
                 <div className="space-y-3">
                   <div>
                     <p className="text-[#888] text-[11px] uppercase tracking-wider mb-1">
-                      User asked
+                      You asked
                     </p>
                     <p className="text-[#ccc] text-[14px] leading-relaxed">
                       {entry.transcript}

@@ -4,18 +4,14 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 import CameraFeed, { CameraFeedHandle } from "@/components/CameraFeed";
 import StatusIndicator from "@/components/StatusIndicator";
 import IrisBloom from "@/components/IrisBloom";
-import { AppState, AppMode } from "@/lib/types";
+import { AppState } from "@/lib/types";
 
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
 
-
-function speakText(text: string, rate = 1.0) {
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = rate;
-  window.speechSynthesis.speak(u);
-}
+const FIRST_LAUNCH_KEY = "iris:first-launch-complete";
+const WELCOME_TEXT =
+  "Welcome to Iris. Tap anywhere on the screen to ask a question. Iris will describe what your camera sees.";
 
 function playChime(freq: number) {
   try {
@@ -42,15 +38,13 @@ export default function Home() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef("");
   const isListeningRef = useRef(false);
-  const modeRef = useRef<AppMode>("scene");
   const audioUnlockedRef = useRef(false);
   const [screen, setScreen] = useState<"landing" | "dismissing" | "camera">("landing");
-  const [mode, setMode] = useState<AppMode>("scene");
   const [appState, setAppState] = useState<AppState>("idle");
   const [isListening, setIsListening] = useState(false);
   const [responseText, setResponseText] = useState<string | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState("");
   useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
-  useEffect(() => { modeRef.current = mode; }, [mode]);
 
   // ── Speech recognition setup ──────────────────────────
   useEffect(() => {
@@ -65,19 +59,21 @@ export default function Home() {
       for (let i = 0; i < event.results.length; i++) {
         text += event.results[i][0].transcript + " ";
       }
-      transcriptRef.current = text.trim();
+      const trimmed = text.trim();
+      transcriptRef.current = trimmed;
+      setLiveTranscript(trimmed);
     };
     recognition.onend = () => {};
     recognition.onerror = () => {};
     recognitionRef.current = recognition;
   }, []);
 
-  // ── Reset on idle — keep responseText visible ─────────
+  // ── Reset on idle — keep responseText + liveTranscript visible until next press
   useEffect(() => {
     if (appState === "idle") frameRef.current = null;
   }, [appState]);
 
-  // ── First tap — unlock audio, welcome, go to camera ───
+  // ── First tap — unlock audio, welcome (first ever only), go to camera
   const handleFirstTap = useCallback(() => {
     if (audioUnlockedRef.current) return;
     audioUnlockedRef.current = true;
@@ -90,33 +86,32 @@ export default function Home() {
       audioRef.current.play().then(() => audioRef.current?.pause()).catch(() => {});
     }
 
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(
-      "Welcome to Iris. Hold anywhere to speak, release to send."
-    );
-    u.rate = 1.0;
-    window.speechSynthesis.speak(u);
+    // First-ever visit on this browser? Speak a welcome aloud.
+    let isFirst = true;
+    try {
+      isFirst = localStorage.getItem(FIRST_LAUNCH_KEY) !== "true";
+    } catch {
+      // Storage blocked; err on the side of not spamming speech on return visits
+      isFirst = false;
+    }
+    if (isFirst) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(WELCOME_TEXT);
+      u.rate = 1.0;
+      window.speechSynthesis.speak(u);
+      try { localStorage.setItem(FIRST_LAUNCH_KEY, "true"); } catch { /* ignore */ }
+    }
 
     cameraRef.current?.startCamera();
     navigator.mediaDevices?.getUserMedia({ audio: true })
       .then(stream => { stream.getTracks().forEach(t => t.stop()); })
       .catch(() => {});
 
-    setMode("scene");
-    modeRef.current = "scene";
     setTimeout(() => {
       setScreen("dismissing");
       setTimeout(() => setScreen("camera"), 400);
     }, 500);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Switch mode in camera view ────────────────────────
-  const switchMode = useCallback(() => {
-    const newMode = modeRef.current === "scene" ? "read" : "scene";
-    setMode(newMode);
-    modeRef.current = newMode;
-    speakText(newMode === "scene" ? "Switched to scene mode." : "Switched to read mode.");
   }, []);
 
   // ── Speak fallback ────────────────────────────────────
@@ -133,8 +128,7 @@ export default function Home() {
   }, []);
 
   // ── Silent hazard reporting ────────────────────────────
-  const reportHazardIfNeeded = useCallback((text: string, currentMode: AppMode) => {
-    if (currentMode !== "scene") return;
+  const reportHazardIfNeeded = useCallback((text: string) => {
     const hazardPattern = /stair|step|pothole|obstruct|uneven|construct|block|curb|crack|barrier|hazard|caution|watch out|be careful|obstacle|tripping|slip/i;
     if (!hazardPattern.test(text)) return;
     navigator.geolocation?.getCurrentPosition(
@@ -158,10 +152,7 @@ export default function Home() {
   // ── Process request ───────────────────────────────────
   const processRequest = useCallback(
     async (transcript: string) => {
-      const currentMode = modeRef.current;
-      if (!transcript && currentMode === "read") transcript = "Read all visible text.";
-      if (!transcript && currentMode === "scene") transcript = "Describe what you see.";
-      if (!transcript) { setAppState("idle"); return; }
+      const finalTranscript = transcript.trim() || "Describe what you see.";
 
       setAppState("thinking");
       const imageBase64 = frameRef.current;
@@ -179,7 +170,7 @@ export default function Home() {
         const response = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: imageBase64, transcript, history: [], mode: currentMode }),
+          body: JSON.stringify({ image: imageBase64, transcript: finalTranscript, history: [] }),
         });
         const contentType = response.headers.get("content-type");
 
@@ -188,7 +179,7 @@ export default function Home() {
           const text = decodeURIComponent(response.headers.get("X-Response-Text") || "");
           setResponseText(text || null);
           setAppState("speaking");
-          reportHazardIfNeeded(text, currentMode);
+          reportHazardIfNeeded(text);
           const audio = audioRef.current;
           if (audio) {
             const url = URL.createObjectURL(blob);
@@ -205,7 +196,7 @@ export default function Home() {
           if (data.error) throw new Error(data.error);
           setResponseText(data.text);
           setAppState("speaking");
-          reportHazardIfNeeded(data.text, currentMode);
+          reportHazardIfNeeded(data.text);
           speakFallback(data.text);
         }
       } catch (error: unknown) {
@@ -218,42 +209,45 @@ export default function Home() {
     [speakFallback, reportHazardIfNeeded]
   );
 
-  // ── Hold-to-talk: press down → listen, lift → send ───
-  const handlePressDown = useCallback(() => {
+  // ── Tap to toggle: first tap starts listening, second tap sends ──
+  const handleCameraTap = useCallback(() => {
     if (appState === "speaking") {
+      // Tap during speaking = stop playback
       window.speechSynthesis.cancel();
       const audio = audioRef.current;
       if (audio) { audio.pause(); audio.src = ""; }
       setAppState("idle");
       return;
     }
-    if (appState === "thinking" || isListening) return;
+    if (appState === "thinking") return;
 
-    window.speechSynthesis.cancel();
-    playChime(1200);
-    setResponseText(null);
-    frameRef.current = null;
-    transcriptRef.current = "";
-    setIsListening(true);
-    setAppState("listening");
-    frameRef.current = cameraRef.current?.capture() || null;
-    try { recognitionRef.current?.stop(); } catch { /* */ }
-    setTimeout(() => {
-      try { recognitionRef.current?.start(); } catch { /* */ }
-    }, 50);
-  }, [appState, isListening]);
-
-  const handlePressUp = useCallback(() => {
-    if (!isListeningRef.current) return;
-    playChime(440);
-    setIsListening(false);
-    try { recognitionRef.current?.stop(); } catch { /* */ }
-    setTimeout(() => {
-      const transcript = transcriptRef.current;
+    if (isListeningRef.current) {
+      // Stop and send
+      playChime(440);
+      setIsListening(false);
+      try { recognitionRef.current?.stop(); } catch { /* */ }
+      setTimeout(() => {
+        const transcript = transcriptRef.current;
+        transcriptRef.current = "";
+        processRequest(transcript);
+      }, 300);
+    } else {
+      // Start fresh listening session
+      window.speechSynthesis.cancel();
+      playChime(1200);
+      setResponseText(null);
+      setLiveTranscript("");
+      frameRef.current = null;
       transcriptRef.current = "";
-      processRequest(transcript);
-    }, 300);
-  }, [processRequest]);
+      setIsListening(true);
+      setAppState("listening");
+      frameRef.current = cameraRef.current?.capture() || null;
+      try { recognitionRef.current?.stop(); } catch { /* */ }
+      setTimeout(() => {
+        try { recognitionRef.current?.start(); } catch { /* */ }
+      }, 50);
+    }
+  }, [appState, processRequest]);
 
   return (
     <main className="fixed inset-0 bg-[#efe7d6]">
@@ -310,7 +304,7 @@ export default function Home() {
             textTransform: "uppercase" as const, color: "rgba(30,26,21,0.2)",
             opacity: 0, animation: "textUp 1.6s ease-out 3.0s forwards",
           }}>
-            Click now to get started
+            Tap anywhere to start
           </div>
         </div>
       )}
@@ -320,10 +314,9 @@ export default function Home() {
       {screen === "camera" && (
         <StatusIndicator
           state={appState}
-          mode={mode}
           isListening={isListening}
           responseText={responseText}
-          onSwitchMode={switchMode}
+          liveTranscript={liveTranscript}
         />
       )}
 
@@ -332,22 +325,18 @@ export default function Home() {
       {screen === "camera" && (
         <div
           className="fixed inset-0 z-40"
-          onMouseDown={handlePressDown}
-          onMouseUp={handlePressUp}
-          onTouchStart={(e) => { e.preventDefault(); handlePressDown(); }}
-          onTouchEnd={(e) => { e.preventDefault(); handlePressUp(); }}
+          onClick={handleCameraTap}
+          onTouchEnd={(e) => { e.preventDefault(); handleCameraTap(); }}
           role="button"
           tabIndex={0}
           aria-label={
             isListening
-              ? "Release to send your question"
+              ? "Tap to send your question"
               : appState === "thinking"
                 ? "Analyzing your question"
                 : appState === "speaking"
                   ? "Tap to stop response"
-                  : mode === "scene"
-                    ? "Hold to speak, release to send"
-                    : "Hold to speak, release to read text"
+                  : "Tap anywhere to describe what you see"
           }
         />
       )}

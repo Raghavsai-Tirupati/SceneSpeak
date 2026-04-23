@@ -9,7 +9,6 @@ export interface HistoryEntry {
   timestamp: number;
   transcript: string;
   response: string;
-  mode: string;
 }
 
 function readHistory(): HistoryEntry[] {

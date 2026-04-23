@@ -1,15 +1,12 @@
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
-import { Message, AppMode } from "./types";
+import { Message } from "./types";
 
-const SCENE_INSTRUCTION = `You are Iris, a real-time visual assistant for blind users. Describe what you see in exactly 1-2 short sentences. Prioritize hazards and obstacles first, then the most important visual details. Be direct — no filler words, no greetings, no "I can see". Just state what matters.`;
-
-const READ_INSTRUCTION = `You are a text reader for a blind user. Read the visible text exactly as written, concisely. Keep it to the essential text only — skip decorative or repeated elements. If no text is visible, say 'No text in view.' Do not describe the scene.`;
+const INSTRUCTION = `You are Iris, a real-time visual assistant for blind users. Describe what you see in exactly 1-2 short sentences. Prioritize hazards and obstacles first, then the most important visual details. If the user asks you to read text, read it exactly as written, concisely. Be direct — no filler words, no greetings, no "I can see". Just state what matters.`;
 
 export async function askGemini(
   imageBase64: string,
   transcript: string,
   history: Message[],
-  mode: AppMode = "scene"
 ): Promise<string> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
@@ -19,7 +16,7 @@ export async function askGemini(
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
-    systemInstruction: mode === "read" ? READ_INSTRUCTION : SCENE_INSTRUCTION,
+    systemInstruction: INSTRUCTION,
   });
 
   const recentHistory = history.slice(-10);
